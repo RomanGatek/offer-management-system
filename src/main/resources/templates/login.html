@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Přihlášení</title>
+</head>
+<body>
+<h2>Přihlášení</h2>
+<form th:action="@{/login}" method="post">
+    <div>
+        <label>Uživatel:</label>
+        <input type="text" name="username"/>
+    </div>
+    <div>
+        <label>Heslo:</label>
+        <input type="password" name="password"/>
+    </div>
+    <div>
+        <button type="submit">Přihlásit se</button>
+    </div>
+</form>
+</body>
+</html>

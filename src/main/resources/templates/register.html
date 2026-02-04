@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Registrace</title>
+</head>
+<body>
+<h1>Registrace nového uživatele</h1>
+
+<div th:if="${error}" style="color:red;">
+  <p th:text="${error}"></p>
+</div>
+
+<form th:action="@{/register}" th:object="${user}" method="post">
+  <label>Uživatelské jméno:</label>
+  <input type="text" th:field="*{username}" required/><br/>
+
+  <label>Heslo:</label>
+  <input type="password" th:field="*{password}" required/><br/>
+
+  <button type="submit">Registrovat</button>
+</form>
+
+<a th:href="@{/login}">Zpět na přihlášení</a>
+</body>
+</html>
