@@ -3,7 +3,7 @@ package com.example.offermanagementsystem.controller;
 import com.example.offermanagementsystem.model.User;
 import com.example.offermanagementsystem.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -16,7 +16,7 @@ public class HomeController {
     private UserRepository userRepository;
 
     @Autowired
-    private BCryptPasswordEncoder encoder;
+    private PasswordEncoder encoder;
 
     @PostConstruct
     public void initAdminUser() {

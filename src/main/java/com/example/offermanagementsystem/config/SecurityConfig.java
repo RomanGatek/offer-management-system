@@ -6,6 +6,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.frameoptions.XFrameOptionsHeaderWriter;
 
@@ -13,7 +14,7 @@ import org.springframework.security.web.header.writers.frameoptions.XFrameOption
 public class SecurityConfig {
 
     @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
@@ -21,17 +22,25 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        // veřejné stránky
-                        .requestMatchers(
-                                "/login",
-                                "/register",
-                                "/h2-console/**",
-                                "/css/**",
-                                "/js/**"
-                        ).permitAll()
+                                .requestMatchers(
+                                        "/login",
+                                        "/register",
+                                        "/css/**",
+                                        "/js/**"
+                                ).permitAll()
 
-                        // vše ostatní jen po přihlášení
-                        .anyRequest().authenticated()
+                                // ADMIN-only
+                                .requestMatchers(
+                                        "/offers/delete/**",
+                                        "/admin/**"
+                                ).hasRole("ADMIN")
+
+                                // USER i ADMIN
+                                .requestMatchers(
+                                        "/offers/**"
+                                ).hasAnyRole("USER", "ADMIN")
+
+                                .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
@@ -42,7 +51,6 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
                 )
-                // H2 konzole
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/h2-console/**")
                 )

@@ -19,17 +19,29 @@ repositories {
 }
 
 dependencies {
+	// Web + MVC
+	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+	implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
+
+	// Data & Security
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-security")
-	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
-	implementation("org.springframework.boot:spring-boot-starter-web")
-	implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
-	implementation("com.github.librepdf:openpdf:1.3.30")
+
+	// PostgreSQL + Flyway
+	implementation("org.postgresql:postgresql:42.7.3")
+	implementation("org.flywaydb:flyway-core")
+	implementation("org.flywaydb:flyway-database-postgresql")
+
+	// Validation & utils
 	implementation("org.hibernate.validator:hibernate-validator:8.0.1.Final")
+	implementation("com.github.librepdf:openpdf:1.3.30")
 	implementation("org.springframework.boot:spring-boot-starter-mail")
-	runtimeOnly("com.h2database:h2")
+
+	// Tests
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
+	testRuntimeOnly("com.h2database:h2")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

@@ -1,0 +1,17 @@
+<h3>Historie změn stavu</h3>
+
+<table border="1">
+    <tr>
+        <th>Kdy</th>
+        <th>Kdo</th>
+        <th>Z</th>
+        <th>Na</th>
+    </tr>
+
+    <tr th:each="h : ${history}">
+        <td th:text="${#temporals.format(h.changedAt,'dd.MM.yyyy HH:mm')}"></td>
+        <td th:text="${h.changedBy.username}"></td>
+        <td th:text="${h.fromStatus}"></td>
+        <td th:text="${h.toStatus}"></td>
+    </tr>
+</table>

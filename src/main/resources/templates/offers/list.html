@@ -1,67 +1,81 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="cs"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-  <title>Nabídky</title>
-  <meta charset="UTF-8">
-  <style>
-    .badge {
-      color: white;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: bold;
-    }
-    .badge-nova { background-color: blue; }
-    .badge-odeslana { background-color: orange; }
-    .badge-prijata { background-color: green; }
-    .badge-zamitnuta { background-color: red; }
-    .badge-neznamy { background-color: gray; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Nabídky</title>
 </head>
 <body>
-<p>🧪 TEST ŠABLONA NAČTENA 🧪</p>
 
 <h2>Seznam nabídek</h2>
 
 <a th:href="@{/offers/new}">+ Nová nabídka</a>
+<br><br>
 
 <table border="1">
-  <thead>
-  <tr>
-    <th>Zákazník</th>
-    <th>Popis</th>
-    <th>Cena</th>
-    <th>Datum</th>
-    <th>Stav</th>
-    <th>Akce</th>
-  </tr>
-  </thead>
-  <tbody>
-  <tr th:each="offer : ${offers}">
-    <td th:text="${offer.customerName}"></td>
-    <td th:text="${offer.description}"></td>
-    <td th:text="${offer.totalPrice}"></td>
-    <td th:text="${#temporals.format(offer.createdDate, 'dd.MM.yyyy')}">01.01.2024</td>
-    <td>
-      <span th:switch="${offer.status.name()}">
-      <span th:case="'NOVA'" class="badge badge-nova">Nová</span>
-      <span th:case="'ODESLANA'" class="badge badge-odeslana">Odeslaná</span>
-      <span th:case="'PRIJATA'" class="badge badge-prijata">Přijatá</span>
-      <span th:case="'ZAMITNUTA'" class="badge badge-zamitnuta">Zamítnutá</span>
-      <span th:case="*">Neznámý</span>
-</span>
-    </td>
-    <td>
-      <a th:href="@{'/offers/edit/' + ${offer.id}}">Upravit</a> |
-      <a th:href="@{'/offers/delete/' + ${offer.id}}"
-         onclick="return confirm('Opravdu chcete smazat tuto nabídku?');">Smazat</a> |
-      <a th:href="@{'/offers/export/' + ${offer.id}}">PDF</a>
-    </td>
-  </tr>
-  </tbody>
-</table>
+    <thead>
+    <tr>
+        <th>Zákazník</th>
+        <th>Popis</th>
+        <th>Cena</th>
+        <th>Stav</th>
+        <th>Akce</th>
+    </tr>
+    </thead>
 
-<br>
-<a th:href="@{/}">Zpět na úvod</a>
+    <tbody>
+    <tr th:each="offer : ${offers}">
+        <td th:text="${offer.customerName}"></td>
+        <td th:text="${offer.description}"></td>
+        <td th:text="${offer.totalPrice}"></td>
+        <td th:text="${offer.status}"></td>
+
+        <td>
+            <a th:href="@{'/offers/edit/' + ${offer.id}}">Upravit</a>
+
+            <form th:if="${offer.status.name() == 'NOVA'}"
+                  sec:authorize="hasRole('USER')"
+                  th:action="@{'/offers/' + ${offer.id} + '/send'}"
+                  method="post"
+                  style="display:inline">
+                <button>Odeslat</button>
+            </form>
+
+            <form th:if="${offer.status.name() == 'ODESLANA'}"
+                  sec:authorize="hasRole('ADMIN')"
+                  th:action="@{'/offers/' + ${offer.id} + '/accept'}"
+                  method="post"
+                  style="display:inline">
+                <button>Přijmout</button>
+            </form>
+
+            <form th:if="${offer.status.name() == 'ODESLANA'}"
+                  sec:authorize="hasRole('ADMIN')"
+                  th:action="@{'/offers/' + ${offer.id} + '/reject'}"
+                  method="post"
+                  style="display:inline">
+                <button>Zamítnout</button>
+            </form>
+
+            <a th:href="@{'/offers/' + ${offer.id}}">Detail</a> |
+            <a th:href="@{'/offers/export/' + ${offer.id}}">PDF</a>
+        </td>
+
+        <!-- ADMIN → SMAZAT -->
+            <span sec:authorize="hasRole('ADMIN')">
+                <a th:href="@{'/offers/delete/' + ${offer.id}}"
+                   onclick="return confirm('Opravdu smazat?');">
+                    Smazat
+                </a>
+            </span>
+
+            |
+            <a th:href="@{'/offers/export/' + ${offer.id}}">PDF</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
 
 </body>
 </html>
