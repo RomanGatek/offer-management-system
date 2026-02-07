@@ -1,45 +1,66 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="cs"
+      xmlns:th="http://www.thymeleaf.org">
 <head>
-  <title>Nová nabídka</title>
   <meta charset="UTF-8">
+  <title>Nová nabídka</title>
 </head>
+
 <body>
 
 <h1>Vytvořit novou nabídku</h1>
 
-<form th:action="@{/offers}" th:object="${offer}" method="post">
+<form th:action="@{/offers/new}"
+      th:object="${offer}"
+      method="post">
 
+  <!-- ZÁKAZNÍK -->
   <div>
     <label>Zákazník:</label><br/>
-    <input type="text" th:field="*{customerName}" />
+    <input type="text" th:field="*{customerName}" required/>
     <div th:if="${#fields.hasErrors('customerName')}"
-         th:errors="*{customerName}" style="color:red"></div>
-  </div>
-
-  <div>
-    <label>Popis:</label><br/>
-    <textarea th:field="*{description}"></textarea>
-    <div th:if="${#fields.hasErrors('description')}"
-         th:errors="*{description}" style="color:red"></div>
-  </div>
-
-  <div>
-    <label>Celková cena:</label><br/>
-    <input type="number" step="0.01" th:field="*{totalPrice}" />
-    <div th:if="${#fields.hasErrors('totalPrice')}"
-         th:errors="*{totalPrice}" style="color:red"></div>
-  </div>
-
-  <div>
-    <label>Stav nabídky:</label><br/>
-    <select th:field="*{status}">
-      <option th:each="s : ${T(com.example.offermanagementsystem.model.OfferStatus).values()}"
-              th:value="${s}" th:text="${s}">Stav</option>
-    </select>
+         th:errors="*{customerName}"
+         style="color:red"></div>
   </div>
 
   <br/>
+
+  <!-- EMAIL -->
+  <div>
+    <label>Email zákazníka:</label><br/>
+    <input type="email" th:field="*{customerEmail}" required/>
+    <div th:if="${#fields.hasErrors('customerEmail')}"
+         th:errors="*{customerEmail}"
+         style="color:red"></div>
+  </div>
+
+  <br/>
+
+  <!-- POPIS -->
+  <div>
+    <label>Popis:</label><br/>
+    <textarea th:field="*{description}" required></textarea>
+    <div th:if="${#fields.hasErrors('description')}"
+         th:errors="*{description}"
+         style="color:red"></div>
+  </div>
+
+  <br/>
+
+  <!-- CENA -->
+  <div>
+    <label>Celková cena:</label><br/>
+    <input type="number"
+           step="0.01"
+           th:field="*{totalPrice}"
+           required/>
+    <div th:if="${#fields.hasErrors('totalPrice')}"
+         th:errors="*{totalPrice}"
+         style="color:red"></div>
+  </div>
+
+  <br/>
+
   <button type="submit">Uložit</button>
 </form>
 

@@ -18,7 +18,11 @@
   <input type="text" th:field="*{customerName}" required><br><br>
 
   <label>Email zákazníka:</label><br>
-  <input type="email" th:field="*{customerEmail}" required><br><br>
+  <input type="email" th:field="*{customerEmail}">
+  <div th:if="${#fields.hasErrors('customerEmail')}"
+       th:errors="*{customerEmail}">
+  </div>
+  <br><br>
 
   <label>Popis:</label><br>
   <textarea th:field="*{description}" required></textarea><br><br>

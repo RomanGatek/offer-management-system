@@ -1,17 +1,150 @@
+<!DOCTYPE html>
+<html lang="cs"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Detail nabídky</title>
+</head>
+
+<body>
+
+<h2>Detail nabídky</h2>
+
+<!-- ================= ZÁKLADNÍ INFO ================= -->
+<p>
+    <strong>Zákazník:</strong>
+    <span th:text="${offer.customerName}"></span><br>
+
+    <strong>Email:</strong>
+    <span th:text="${offer.customerEmail}"></span><br>
+
+    <strong>Popis:</strong>
+    <span th:text="${offer.description}"></span><br>
+
+    <strong>Cena:</strong>
+    <span th:text="${offer.totalPrice} + ' Kč'"></span><br>
+
+    <strong>Stav:</strong>
+    <strong th:text="${offer.status}"></strong><br>
+
+    <strong>Revize:</strong>
+    <span th:text="${offer.revision}"></span>
+
+    <span th:if="${offer.inEdit}"
+          style="color:red; font-weight:bold;">
+        (nabídka je právě editována)
+    </span>
+</p>
+
+<hr>
+
+<!-- ================= AKCE (VLASTNÍK NABÍDKY) ================= -->
+
+<!-- EDIT -->
+<span th:if="${offer.status.name() == 'NOVA' or offer.status.name() == 'K_UPRAVE'}">
+    <a th:href="@{'/offers/edit/' + ${offer.id}}">Upravit</a>
+</span>
+
+<!-- SEND -->
+<form th:if="${offer.status.name() == 'NOVA' or offer.status.name() == 'K_UPRAVE'}"
+      th:action="@{'/offers/' + ${offer.id} + '/send'}"
+      method="post"
+      style="display:inline">
+    <button type="submit">Odeslat</button>
+</form>
+
+<!-- ================= ODESLANA ================= -->
+<div th:if="${offer.status.name() == 'ODESLANA'}">
+
+    <p style="color:#ff9800; font-weight:bold;">
+        Nabídka byla odeslána a čeká na reakci zákazníka.
+    </p>
+
+    <form th:action="@{'/offers/' + ${offer.id} + '/accept'}"
+          method="post"
+          style="display:inline">
+        <button type="submit">Přijata</button>
+    </form>
+
+    <form th:action="@{'/offers/' + ${offer.id} + '/reject'}"
+          method="post"
+          style="display:inline">
+        <button type="submit">Zamítnuta</button>
+    </form>
+
+    <form th:action="@{'/offers/' + ${offer.id} + '/request-fix'}"
+          method="post"
+          style="margin-top:10px">
+
+        <label><strong>Důvod k úpravě:</strong></label><br>
+        <textarea name="note"
+                  required
+                  rows="4"
+                  cols="60"
+                  placeholder="Co je potřeba upravit?"></textarea><br>
+
+        <button type="submit">Vrátit k úpravě</button>
+    </form>
+</div>
+
+<hr>
+
+<!-- ================= HISTORIE STAVŮ ================= -->
 <h3>Historie změn stavu</h3>
 
-<table border="1">
+<table border="1" cellpadding="5">
+    <thead>
     <tr>
         <th>Kdy</th>
         <th>Kdo</th>
         <th>Z</th>
         <th>Na</th>
+        <th>Poznámka</th>
     </tr>
+    </thead>
 
+    <tbody>
     <tr th:each="h : ${history}">
         <td th:text="${#temporals.format(h.changedAt,'dd.MM.yyyy HH:mm')}"></td>
         <td th:text="${h.changedBy.username}"></td>
         <td th:text="${h.fromStatus}"></td>
         <td th:text="${h.toStatus}"></td>
+        <td th:text="${h.note}"></td>
     </tr>
+    </tbody>
 </table>
+
+<hr>
+
+<!-- ================= REVIZE NABÍDKY ================= -->
+<h3>Revize nabídky</h3>
+
+<table border="1" cellpadding="5">
+    <thead>
+    <tr>
+        <th>Revize</th>
+        <th>Vytvořeno</th>
+        <th>Autor</th>
+        <th>Popis</th>
+        <th>Cena</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="r : ${revisions}">
+        <td th:text="${r.revisionNumber}"></td>
+        <td th:text="${#temporals.format(r.createdAt,'dd.MM.yyyy HH:mm')}"></td>
+        <td th:text="${r.createdBy.username}"></td>
+        <td th:text="${r.description}"></td>
+        <td th:text="${r.totalPrice} + ' Kč'"></td>
+    </tr>
+    </tbody>
+</table>
+
+<br>
+
+<a th:href="@{/offers}">← Zpět na seznam</a>
+
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="cs"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Nabídka</title>
+
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: auto; }
+    .price { font-size: 1.4em; font-weight: bold; }
+    .success { color: green; font-weight: bold; }
+    .error { color: red; font-weight: bold; }
+    .info { color: #555; font-style: italic; }
+    button { padding: 8px 14px; margin-right: 6px; }
+  </style>
+</head>
+
+<body>
+
+<h2>Nabídka</h2>
+
+<p>
+  <strong>Zákazník:</strong>
+  <span th:text="${offer.customerName}"></span><br>
+
+  <strong>Popis:</strong><br>
+  <span th:text="${offer.description}"></span><br><br>
+
+  <strong>Cena:</strong>
+  <span class="price"
+        th:text="${offer.totalPrice} + ' Kč'"></span><br>
+
+  <strong>Stav:</strong>
+  <span th:text="${offer.status}"></span>
+</p>
+
+<hr>
+
+<!-- ZPRÁVY -->
+<div th:if="${param.success}" class="success">
+  Děkujeme za Vaši reakci.
+</div>
+
+<div th:if="${param.error}" class="error">
+  Tato akce již není možná.
+</div>
+
+<!-- INFO PO ROZHODNUTÍ -->
+<div th:if="${offer.status.name() != 'ODESLANA'}" class="info">
+  Tato nabídka již byla zpracována.
+</div>
+
+<!-- AKCE – JEN KDYŽ JE ODESLANA -->
+<div th:if="${offer.status.name() == 'ODESLANA'}">
+
+  <form th:action="@{'/customer/' + ${offer.customerToken} + '/accept'}"
+        method="post"
+        style="display:inline">
+    <button type="submit">✅ Přijmout nabídku</button>
+  </form>
+
+  <form th:action="@{'/customer/' + ${offer.customerToken} + '/reject'}"
+        method="post"
+        style="margin-top:10px">
+
+    <label>Důvod zamítnutí (nepovinné):</label><br>
+    <textarea name="note"
+              rows="4"
+              cols="50"
+              placeholder="Napište důvod..."></textarea><br>
+
+    <button type="submit">❌ Zamítnout nabídku</button>
+  </form>
+</div>
+
+</body>
+</html>

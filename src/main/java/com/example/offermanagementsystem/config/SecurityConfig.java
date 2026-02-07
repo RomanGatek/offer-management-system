@@ -22,25 +22,25 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                                .requestMatchers(
-                                        "/login",
-                                        "/register",
-                                        "/css/**",
-                                        "/js/**"
-                                ).permitAll()
+                        .requestMatchers(
+                                "/login",
+                                "/register",
+                                "/css/**",
+                                "/js/**"
+                        ).permitAll()
 
-                                // ADMIN-only
-                                .requestMatchers(
-                                        "/offers/delete/**",
-                                        "/admin/**"
-                                ).hasRole("ADMIN")
+                        // ADMIN
+                        .requestMatchers(
+                                "/admin/**",
+                                "/offers/delete/**"
+                        ).hasRole("ADMIN")
 
-                                // USER i ADMIN
-                                .requestMatchers(
-                                        "/offers/**"
-                                ).hasAnyRole("USER", "ADMIN")
+                        // USER + ADMIN
+                        .requestMatchers(
+                                "/offers/**"
+                        ).hasAnyRole("USER", "ADMIN")
 
-                                .anyRequest().authenticated()
+                        .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
@@ -67,8 +67,8 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration authConfig
+            AuthenticationConfiguration config
     ) throws Exception {
-        return authConfig.getAuthenticationManager();
+        return config.getAuthenticationManager();
     }
 }

@@ -1,11 +1,34 @@
 <!DOCTYPE html>
 <html lang="cs"
-      xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+      xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <title>Nabídky</title>
+
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { padding: 8px; border: 1px solid #ccc; }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .NOVA { background:#2196f3; }
+        .ODESLANA { background:#ff9800; }
+        .K_UPRAVE { background:#9c27b0; }
+        .PRIJATA { background:#4caf50; }
+        .ZAMITNUTA { background:#f44336; }
+
+        .REVIZE { background:#607d8b; }
+        .LOCKED { background:#d32f2f; }
+    </style>
 </head>
+
 <body>
 
 <h2>Seznam nabídek</h2>
@@ -13,12 +36,13 @@
 <a th:href="@{/offers/new}">+ Nová nabídka</a>
 <br><br>
 
-<table border="1">
+<table>
     <thead>
     <tr>
         <th>Zákazník</th>
         <th>Popis</th>
         <th>Cena</th>
+        <th>Revize</th>
         <th>Stav</th>
         <th>Akce</th>
     </tr>
@@ -28,50 +52,45 @@
     <tr th:each="offer : ${offers}">
         <td th:text="${offer.customerName}"></td>
         <td th:text="${offer.description}"></td>
-        <td th:text="${offer.totalPrice}"></td>
-        <td th:text="${offer.status}"></td>
+        <td th:text="${offer.totalPrice} + ' Kč'"></td>
 
+        <!-- ================= REVIZE + LOCK ================= -->
         <td>
-            <a th:href="@{'/offers/edit/' + ${offer.id}}">Upravit</a>
+            <span class="badge"
+                  th:text="'R' + ${offer.revision}"
+                  th:classappend="${offer.inEdit} ? ' LOCKED' : ' REVIZE'">
+            </span>
 
-            <form th:if="${offer.status.name() == 'NOVA'}"
-                  sec:authorize="hasRole('USER')"
+            <span th:if="${offer.inEdit}"
+                  style="color:#d32f2f; font-size:0.8em;">
+                editováno
+            </span>
+        </td>
+
+        <!-- ================= STAV ================= -->
+        <td>
+            <span class="badge"
+                  th:text="${offer.status}"
+                  th:classappend="${offer.status}">
+            </span>
+        </td>
+
+        <!-- ================= AKCE ================= -->
+        <td>
+            <a th:href="@{'/offers/detail/' + ${offer.id}}">Detail</a>
+
+            <span th:if="${offer.status.name() == 'NOVA' or offer.status.name() == 'K_UPRAVE'}">
+                | <a th:href="@{'/offers/edit/' + ${offer.id}}">Upravit</a>
+            </span>
+
+            <form th:if="${offer.status.name() == 'NOVA' or offer.status.name() == 'K_UPRAVE'}"
                   th:action="@{'/offers/' + ${offer.id} + '/send'}"
                   method="post"
                   style="display:inline">
                 <button>Odeslat</button>
             </form>
 
-            <form th:if="${offer.status.name() == 'ODESLANA'}"
-                  sec:authorize="hasRole('ADMIN')"
-                  th:action="@{'/offers/' + ${offer.id} + '/accept'}"
-                  method="post"
-                  style="display:inline">
-                <button>Přijmout</button>
-            </form>
-
-            <form th:if="${offer.status.name() == 'ODESLANA'}"
-                  sec:authorize="hasRole('ADMIN')"
-                  th:action="@{'/offers/' + ${offer.id} + '/reject'}"
-                  method="post"
-                  style="display:inline">
-                <button>Zamítnout</button>
-            </form>
-
-            <a th:href="@{'/offers/' + ${offer.id}}">Detail</a> |
-            <a th:href="@{'/offers/export/' + ${offer.id}}">PDF</a>
-        </td>
-
-        <!-- ADMIN → SMAZAT -->
-            <span sec:authorize="hasRole('ADMIN')">
-                <a th:href="@{'/offers/delete/' + ${offer.id}}"
-                   onclick="return confirm('Opravdu smazat?');">
-                    Smazat
-                </a>
-            </span>
-
-            |
-            <a th:href="@{'/offers/export/' + ${offer.id}}">PDF</a>
+            | <a th:href="@{'/offers/export/' + ${offer.id}}">PDF</a>
         </td>
     </tr>
     </tbody>

@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "offers")
@@ -14,52 +15,134 @@ public class Offer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Zákazník je povinný")
+    // ================= ZÁKAZNÍK =================
+
+    @NotBlank
     @Column(name = "customer_name", nullable = false)
     private String customerName;
 
-    @NotBlank(message = "Email zákazníka je povinný")
-    @Email(message = "Neplatný email")
+    @NotBlank
+    @Email
     @Column(name = "customer_email", nullable = false)
     private String customerEmail;
 
-    @NotBlank(message = "Popis je povinný")
-    @Column(nullable = false)
+    @NotBlank
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String description;
 
-    @NotNull(message = "Cena je povinná")
-    @DecimalMin(value = "0.01", message = "Cena musí být větší než 0")
-    @Column(name = "total_price", nullable = false)
+    // ================= CENA =================
+
+    @NotNull
+    @Column(name = "total_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalPrice;
 
-    @Column(name = "created_date", nullable = false)
-    private LocalDate createdDate = LocalDate.now();
+    // ================= STAV =================
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OfferStatus status = OfferStatus.NOVA;
 
+    /** číslo revize (od 1) */
+    @Column(nullable = false)
+    private Integer revision = 1;
+
+    /** lock při editaci */
+    @Column(name = "in_edit", nullable = false)
+    private boolean inEdit = false;
+
+    // ================= TOKEN =================
+
+    @Column(name = "customer_token", nullable = false, unique = true, length = 64)
+    private String customerToken = UUID.randomUUID().toString();
+
+    // ================= AUDIT =================
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    // ================= VLASTNÍK =================
+
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // ===== GETTERY / SETTERY =====
+    // ================= GETTERS =================
 
-    public Long getId() { return id; }
-    public String getCustomerName() { return customerName; }
-    public String getCustomerEmail() { return customerEmail; }
-    public String getDescription() { return description; }
-    public BigDecimal getTotalPrice() { return totalPrice; }
-    public LocalDate getCreatedDate() { return createdDate; }
-    public OfferStatus getStatus() { return status; }
-    public User getUser() { return user; }
+    public Long getId() {
+        return id;
+    }
 
-    public void setId(Long id) { this.id = id; }
-    public void setCustomerName(String customerName) { this.customerName = customerName; }
-    public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
-    public void setDescription(String description) { this.description = description; }
-    public void setTotalPrice(BigDecimal totalPrice) { this.totalPrice = totalPrice; }
-    public void setCreatedDate(LocalDate createdDate) { this.createdDate = createdDate; }
-    public void setStatus(OfferStatus status) { this.status = status; }
-    public void setUser(User user) { this.user = user; }
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public String getCustomerEmail() {
+        return customerEmail;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public BigDecimal getTotalPrice() {
+        return totalPrice;
+    }
+
+    public OfferStatus getStatus() {
+        return status;
+    }
+
+    public Integer getRevision() {
+        return revision;
+    }
+
+    public boolean isInEdit() {
+        return inEdit;
+    }
+
+    public String getCustomerToken() {
+        return customerToken;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    // ================= SETTERS =================
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public void setCustomerEmail(String customerEmail) {
+        this.customerEmail = customerEmail;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setTotalPrice(BigDecimal totalPrice) {
+        this.totalPrice = totalPrice;
+    }
+
+    public void setStatus(OfferStatus status) {
+        this.status = status;
+    }
+
+    public void setRevision(Integer revision) {
+        this.revision = revision;
+    }
+
+    public void setInEdit(boolean inEdit) {
+        this.inEdit = inEdit;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
 }
