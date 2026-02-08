@@ -14,22 +14,16 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    // 🔹 PŮVODNÍ METODA (může zůstat)
-    public void sendStatusEmail(Offer offer) {
-        SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setTo(offer.getCustomerEmail());
-        msg.setSubject("Stav nabídky: " + offer.getStatus());
-        msg.setText(buildText(offer));
+    // 🔹 VEŘEJNÁ BASE URL (zatím natvrdo – později do configu)
+    private static final String BASE_URL = "http://localhost:8080";
 
-        mailSender.send(msg);
-    }
-
-    // ✅ NOVÁ BEZPEČNÁ METODA
+    // ===============================
+    // BEZPEČNÉ ODESLÁNÍ
+    // ===============================
     public void sendStatusEmailSafe(Offer offer) {
         try {
             sendStatusEmail(offer);
         } catch (MailException e) {
-            // log – NEHODIT aplikaci
             System.err.println(
                     "Nepodařilo se odeslat email k nabídce ID="
                             + offer.getId() + ": " + e.getMessage()
@@ -37,8 +31,27 @@ public class EmailService {
         }
     }
 
-    // 🔹 VYTAŽENÝ TEXT – přehlednější
-    private String buildText(Offer offer) {
+    // ===============================
+    // HLAVNÍ EMAIL
+    // ===============================
+    private void sendStatusEmail(Offer offer) {
+
+        String publicUrl =
+                BASE_URL + "/public/offers/" + offer.getCustomerToken();
+
+        SimpleMailMessage msg = new SimpleMailMessage();
+        msg.setTo(offer.getCustomerEmail());
+        msg.setSubject("Stav nabídky: " + offer.getStatus());
+        msg.setText(buildText(offer, publicUrl));
+
+        mailSender.send(msg);
+    }
+
+    // ===============================
+    // TEXT EMAILU
+    // ===============================
+    private String buildText(Offer offer, String publicUrl) {
+
         return switch (offer.getStatus()) {
 
             case ODESLANA -> """
@@ -47,26 +60,51 @@ public class EmailService {
                     Vaše nabídka byla ODESLÁNA.
                     Cena: %s Kč
 
+                    Nabídku si můžete zobrazit zde:
+                    %s
+
                     S pozdravem
                     """.formatted(
                     offer.getCustomerName(),
-                    offer.getTotalPrice()
+                    offer.getTotalPrice(),
+                    publicUrl
             );
 
             case PRIJATA -> """
                     Dobrý den %s,
 
                     Vaše nabídka byla PŘIJATA 🎉
-                    Ozveme se s dalšími kroky.
-                    """.formatted(offer.getCustomerName());
+
+                    Detail nabídky:
+                    %s
+                    """.formatted(
+                    offer.getCustomerName(),
+                    publicUrl
+            );
 
             case ZAMITNUTA -> """
                     Dobrý den %s,
 
                     Vaše nabídka byla ZAMÍTNUTA.
-                    """.formatted(offer.getCustomerName());
 
-            default -> "";
+                    Detail nabídky:
+                    %s
+                    """.formatted(
+                    offer.getCustomerName(),
+                    publicUrl
+            );
+
+            default -> """
+                    Dobrý den %s,
+
+                    Došlo ke změně stavu Vaší nabídky.
+
+                    Detail:
+                    %s
+                    """.formatted(
+                    offer.getCustomerName(),
+                    publicUrl
+            );
         };
     }
 }

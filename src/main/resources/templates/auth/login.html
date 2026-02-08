@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Přihlášení</title>
+</head>
+<body>
+
+<h2>Přihlášení</h2>
+
+<!-- Chybová hláška -->
+<p th:if="${param.error}" style="color:red;">
+    Nesprávné uživatelské jméno nebo heslo
+</p>
+
+<!-- Logout hláška -->
+<p th:if="${param.logout}" style="color:green;">
+    Byl jsi úspěšně odhlášen
+</p>
+
+<form th:action="@{/login}" method="post">
+
+    <!-- CSRF token (POVINNÉ) -->
+    <input type="hidden"
+           th:name="${_csrf.parameterName}"
+           th:value="${_csrf.token}" />
+
+    <div>
+        <label>Uživatel:</label>
+        <input type="text" name="username" required />
+    </div>
+
+    <div>
+        <label>Heslo:</label>
+        <input type="password" name="password" required />
+    </div>
+
+    <div>
+        <button type="submit">Přihlásit se</button>
+    </div>
+
+</form>
+
+</body>
+</html>

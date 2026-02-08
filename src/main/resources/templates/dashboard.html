@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="cs"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+</head>
+
+<body>
+
+<h1>Dashboard</h1>
+
+<p>
+    Přihlášen jako:
+    <strong th:text="${user.username}"></strong>
+</p>
+
+<p>
+    Role:
+    <strong th:text="${user.role}"></strong>
+</p>
+
+<!-- ================= ADMIN ODKAZ ================= -->
+<div th:if="${user.role == 'ROLE_ADMIN'}">
+    <hr>
+    <a href="/admin">⚙ ADMIN – Správa nabídek</a>
+</div>
+
+<hr>
+
+<h2>Moje nabídky</h2>
+
+<div th:if="${#lists.isEmpty(offers)}">
+    <p>Nemáš zatím žádné nabídky.</p>
+</div>
+
+<table th:if="${!#lists.isEmpty(offers)}"
+       border="1"
+       cellpadding="6">
+
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Zákazník</th>
+        <th>Stav</th>
+        <th>Cena</th>
+        <th>Akce</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="offer : ${offers}">
+        <td th:text="${offer.id}"></td>
+        <td th:text="${offer.customerName}"></td>
+        <td th:text="${offer.status}"></td>
+        <td th:text="${offer.totalPrice} + ' Kč'"></td>
+
+        <td>
+            <a th:href="@{/offers/detail/{id}(id=${offer.id})}">
+                Detail
+            </a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<br>
+
+<a th:href="@{/offers/new}">➕ Nová nabídka</a>
+
+&nbsp;|&nbsp;
+
+<form th:action="@{/logout}" method="post" style="display:inline">
+    <input type="hidden"
+           th:name="${_csrf.parameterName}"
+           th:value="${_csrf.token}" />
+    <button type="submit">🚪 Odhlásit se</button>
+</form>
+
+</body>
+</html>

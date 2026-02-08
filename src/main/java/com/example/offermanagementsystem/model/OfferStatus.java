@@ -1,9 +1,9 @@
 package com.example.offermanagementsystem.model;
 
 public enum OfferStatus {
-    NOVA,
-    ODESLANA,
-    K_UPRAVE,
-    PRIJATA,
-    ZAMITNUTA
+    NOVA,        // nově vytvořená nabídka
+    ODESLANA,    // odesláno zákazníkovi (email / link)
+    K_UPRAVE,    // vráceno zákazníkem k úpravě
+    PRIJATA,    // přijato zákazníkem
+    ZAMITNUTA   // zamítnuto zákazníkem
 }

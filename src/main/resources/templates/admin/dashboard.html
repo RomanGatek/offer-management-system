@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>ADMIN – Přehled nabídek</title>
+</head>
+<body>
+
+<h1>ADMIN – Aktivní nabídky</h1>
+
+<table border="1" cellpadding="6">
+  <thead>
+  <tr>
+    <th>ID</th>
+    <th>Zákazník</th>
+    <th>Stav</th>
+    <th>Otevření</th>
+    <th>Naposledy</th>
+    <th>Reakce</th>
+    <th>Akce</th>
+  </tr>
+  </thead>
+
+  <tbody>
+  <tr th:each="offer : ${activeOffers}">
+    <td th:text="${offer.id}"></td>
+    <td th:text="${offer.customerName}"></td>
+    <td th:text="${offer.status}"></td>
+
+    <!-- OTEVŘENÍ -->
+    <td th:text="${viewsMap[offer.id]} + '×'"></td>
+
+    <!-- NAPOSLEDY -->
+    <td>
+            <span th:if="${lastViewedMap[offer.id] != null}"
+                  th:text="${#temporals.format(lastViewedMap[offer.id],'dd.MM.yyyy HH:mm')}"></span>
+      <span th:if="${lastViewedMap[offer.id] == null}"
+            style="color:red">nikdy</span>
+    </td>
+
+    <!-- REAKCE -->
+    <td>
+            <span th:if="${reactionMap[offer.id] == 'ACCEPT'}"
+                  style="color:green;font-weight:bold">✔ přijata</span>
+
+      <span th:if="${reactionMap[offer.id] == 'REJECT'}"
+            style="color:red;font-weight:bold">✖ zamítnuta</span>
+
+      <span th:if="${reactionMap[offer.id] == null and viewsMap[offer.id] > 0}"
+            style="color:#ff9800">⏳ čeká</span>
+
+      <span th:if="${viewsMap[offer.id] == 0}"
+            style="color:gray">⚠ neotevřeno</span>
+    </td>
+
+    <!-- AKCE -->
+    <td>
+      <form th:action="@{/admin/offers/{id}/archive(id=${offer.id})}"
+            method="post">
+        <input type="hidden"
+               th:name="${_csrf.parameterName}"
+               th:value="${_csrf.token}"/>
+        <button type="submit">📦 Archivovat</button>
+      </form>
+    </td>
+  </tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>Archiv</h2>
+
+<table border="1" cellpadding="6">
+  <thead>
+  <tr>
+    <th>ID</th>
+    <th>Zákazník</th>
+    <th>Akce</th>
+  </tr>
+  </thead>
+
+  <tbody>
+  <tr th:each="offer : ${archivedOffers}">
+    <td th:text="${offer.id}"></td>
+    <td th:text="${offer.customerName}"></td>
+
+    <td>
+      <form th:action="@{/admin/offers/{id}/restore(id=${offer.id})}"
+            method="post">
+        <input type="hidden"
+               th:name="${_csrf.parameterName}"
+               th:value="${_csrf.token}"/>
+        <button type="submit">♻️ Obnovit</button>
+      </form>
+    </td>
+  </tr>
+  </tbody>
+</table>
+
+<br>
+<a href="/">← Zpět</a>
+
+</body>
+</html>

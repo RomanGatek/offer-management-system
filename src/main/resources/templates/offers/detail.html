@@ -11,7 +11,6 @@
 
 <h2>Detail nabídky</h2>
 
-<!-- ================= ZÁKLADNÍ INFO ================= -->
 <p>
     <strong>Zákazník:</strong>
     <span th:text="${offer.customerName}"></span><br>
@@ -31,66 +30,63 @@
     <strong>Revize:</strong>
     <span th:text="${offer.revision}"></span>
 
-    <span th:if="${offer.inEdit}"
-          style="color:red; font-weight:bold;">
-        (nabídka je právě editována)
+    <span th:if="${offer.inEdit}" style="color:red;font-weight:bold;">
+        (právě editováno)
     </span>
 </p>
 
 <hr>
 
-<!-- ================= AKCE (VLASTNÍK NABÍDKY) ================= -->
+<!-- ================= WORKFLOW ================= -->
 
-<!-- EDIT -->
-<span th:if="${offer.status.name() == 'NOVA' or offer.status.name() == 'K_UPRAVE'}">
-    <a th:href="@{'/offers/edit/' + ${offer.id}}">Upravit</a>
-</span>
+<!-- NOVA -->
+<div th:if="${offer.status.name() == 'NOVA'}">
+    <form th:action="@{/offers/{id}/send(id=${offer.id})}"
+          method="post"
+          onsubmit="return confirm('Odeslat nabídku?');">
 
-<!-- SEND -->
-<form th:if="${offer.status.name() == 'NOVA' or offer.status.name() == 'K_UPRAVE'}"
-      th:action="@{'/offers/' + ${offer.id} + '/send'}"
-      method="post"
-      style="display:inline">
-    <button type="submit">Odeslat</button>
-</form>
+        <input type="hidden"
+               th:name="${_csrf.parameterName}"
+               th:value="${_csrf.token}" />
 
-<!-- ================= ODESLANA ================= -->
+        <button type="submit">📤 Odeslat nabídku</button>
+    </form>
+</div>
+
+<!-- ODESLANA -->
 <div th:if="${offer.status.name() == 'ODESLANA'}">
-
-    <p style="color:#ff9800; font-weight:bold;">
-        Nabídka byla odeslána a čeká na reakci zákazníka.
+    <p style="color:#ff9800;font-weight:bold;">
+        Nabídka byla odeslána a čeká na reakci.
     </p>
 
-    <form th:action="@{'/offers/' + ${offer.id} + '/accept'}"
-          method="post"
-          style="display:inline">
-        <button type="submit">Přijata</button>
+    <form th:action="@{/offers/{id}/request-fix(id=${offer.id})}"
+          method="post">
+
+        <input type="hidden"
+               th:name="${_csrf.parameterName}"
+               th:value="${_csrf.token}" />
+
+        <label>Důvod k úpravě:</label><br>
+        <textarea name="note" required rows="4" cols="60"></textarea><br><br>
+
+        <button type="submit">↩ Vrátit k úpravě</button>
     </form>
+</div>
 
-    <form th:action="@{'/offers/' + ${offer.id} + '/reject'}"
-          method="post"
-          style="display:inline">
-        <button type="submit">Zamítnuta</button>
-    </form>
+<!-- K_UPRAVE -->
+<div th:if="${offer.status.name() == 'K_UPRAVE'}">
+    <p style="color:#2196f3;font-weight:bold;">
+        Nabídka je vrácena k úpravě.
+    </p>
 
-    <form th:action="@{'/offers/' + ${offer.id} + '/request-fix'}"
-          method="post"
-          style="margin-top:10px">
-
-        <label><strong>Důvod k úpravě:</strong></label><br>
-        <textarea name="note"
-                  required
-                  rows="4"
-                  cols="60"
-                  placeholder="Co je potřeba upravit?"></textarea><br>
-
-        <button type="submit">Vrátit k úpravě</button>
-    </form>
+    <a th:href="@{/offers/edit/{id}(id=${offer.id})}">
+        ✏ Upravit nabídku
+    </a>
 </div>
 
 <hr>
 
-<!-- ================= HISTORIE STAVŮ ================= -->
+<!-- ================= HISTORIE ================= -->
 <h3>Historie změn stavu</h3>
 
 <table border="1" cellpadding="5">
@@ -117,7 +113,7 @@
 
 <hr>
 
-<!-- ================= REVIZE NABÍDKY ================= -->
+<!-- ================= REVIZE ================= -->
 <h3>Revize nabídky</h3>
 
 <table border="1" cellpadding="5">
@@ -144,7 +140,7 @@
 
 <br>
 
-<a th:href="@{/offers}">← Zpět na seznam</a>
+<a th:href="@{/}">← Zpět na dashboard</a>
 
 </body>
 </html>

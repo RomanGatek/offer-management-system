@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Nabídka</title>
+</head>
+<body>
+
+<h2>Nabídka pro zákazníka</h2>
+
+<p>
+    <strong>Zákazník:</strong> <span th:text="${offer.customerName}"></span><br>
+    <strong>Popis:</strong> <span th:text="${offer.description}"></span><br>
+    <strong>Cena:</strong> <strong th:text="${offer.totalPrice} + ' Kč'"></strong><br>
+    <strong>Stav:</strong> <span th:text="${offer.status}"></span><br>
+    <strong>Platnost do:</strong>
+    <span th:text="${#temporals.format(offer.tokenExpiresAt,'dd.MM.yyyy')}"></span>
+</p>
+
+<hr>
+
+<div th:if="${offer.status.name() == 'ODESLANA'}">
+
+    <form th:action="@{/public/offers/{token}/accept(token=${offer.customerToken})}"
+          method="post">
+        <button type="submit">✅ Přijmout nabídku</button>
+    </form>
+
+    <form th:action="@{/public/offers/{token}/reject(token=${offer.customerToken})}"
+          method="post" style="margin-top:10px">
+        <textarea name="note" rows="3" cols="50"
+                  placeholder="Důvod (volitelné)"></textarea><br>
+        <button type="submit">❌ Zamítnout nabídku</button>
+    </form>
+
+</div>
+
+<div th:if="${offer.status.name() == 'PRIJATA'}">
+    <p style="color:green;font-weight:bold;">✔ Nabídka byla přijata</p>
+</div>
+
+<div th:if="${offer.status.name() == 'ZAMITNUTA'}">
+    <p style="color:red;font-weight:bold;">✖ Nabídka byla zamítnuta</p>
+</div>
+
+<hr>
+
+<p style="color:gray;font-size:14px">
+    Tento odkaz je unikátní a platí maximálně 30 dní.
+</p>
+
+</body>
+</html>

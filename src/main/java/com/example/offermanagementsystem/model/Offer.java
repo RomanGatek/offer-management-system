@@ -18,131 +18,78 @@ public class Offer {
     // ================= ZÁKAZNÍK =================
 
     @NotBlank
-    @Column(name = "customer_name", nullable = false)
     private String customerName;
 
     @NotBlank
     @Email
-    @Column(name = "customer_email", nullable = false)
     private String customerEmail;
 
     @NotBlank
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     // ================= CENA =================
 
     @NotNull
-    @Column(name = "total_price", nullable = false, precision = 10, scale = 2)
+    @Column(precision = 10, scale = 2)
     private BigDecimal totalPrice;
 
     // ================= STAV =================
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private OfferStatus status = OfferStatus.NOVA;
 
-    /** číslo revize (od 1) */
-    @Column(nullable = false)
     private Integer revision = 1;
-
-    /** lock při editaci */
-    @Column(name = "in_edit", nullable = false)
     private boolean inEdit = false;
+    private boolean archived = false;
 
     // ================= TOKEN =================
 
-    @Column(name = "customer_token", nullable = false, unique = true, length = 64)
+    @Column(nullable = false, unique = true, length = 64)
     private String customerToken = UUID.randomUUID().toString();
+
+    @Column(nullable = false)
+    private LocalDateTime tokenExpiresAt;
 
     // ================= AUDIT =================
 
-    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
     // ================= VLASTNÍK =================
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 
-    // ================= GETTERS =================
+    // ================= HELPERS =================
 
-    public Long getId() {
-        return id;
+    public boolean isTokenValid() {
+        return LocalDateTime.now().isBefore(tokenExpiresAt);
     }
 
-    public String getCustomerName() {
-        return customerName;
-    }
+    // ================= GETTERS / SETTERS =================
 
-    public String getCustomerEmail() {
-        return customerEmail;
-    }
+    public Long getId() { return id; }
+    public String getCustomerName() { return customerName; }
+    public String getCustomerEmail() { return customerEmail; }
+    public String getDescription() { return description; }
+    public BigDecimal getTotalPrice() { return totalPrice; }
+    public OfferStatus getStatus() { return status; }
+    public Integer getRevision() { return revision; }
+    public boolean isInEdit() { return inEdit; }
+    public boolean isArchived() { return archived; }
+    public String getCustomerToken() { return customerToken; }
+    public LocalDateTime getTokenExpiresAt() { return tokenExpiresAt; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public User getUser() { return user; }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public BigDecimal getTotalPrice() {
-        return totalPrice;
-    }
-
-    public OfferStatus getStatus() {
-        return status;
-    }
-
-    public Integer getRevision() {
-        return revision;
-    }
-
-    public boolean isInEdit() {
-        return inEdit;
-    }
-
-    public String getCustomerToken() {
-        return customerToken;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    // ================= SETTERS =================
-
-    public void setCustomerName(String customerName) {
-        this.customerName = customerName;
-    }
-
-    public void setCustomerEmail(String customerEmail) {
-        this.customerEmail = customerEmail;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setTotalPrice(BigDecimal totalPrice) {
-        this.totalPrice = totalPrice;
-    }
-
-    public void setStatus(OfferStatus status) {
-        this.status = status;
-    }
-
-    public void setRevision(Integer revision) {
-        this.revision = revision;
-    }
-
-    public void setInEdit(boolean inEdit) {
-        this.inEdit = inEdit;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
+    public void setCustomerName(String v) { this.customerName = v; }
+    public void setCustomerEmail(String v) { this.customerEmail = v; }
+    public void setDescription(String v) { this.description = v; }
+    public void setTotalPrice(BigDecimal v) { this.totalPrice = v; }
+    public void setStatus(OfferStatus v) { this.status = v; }
+    public void setRevision(Integer v) { this.revision = v; }
+    public void setInEdit(boolean v) { this.inEdit = v; }
+    public void setArchived(boolean v) { this.archived = v; }
+    public void setUser(User v) { this.user = v; }
+    public void setTokenExpiresAt(LocalDateTime v) { this.tokenExpiresAt = v; }
 }

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Nabídka expirovala</title>
+</head>
+<body>
+
+<h2>⏳ Nabídka již není platná</h2>
+
+<p>
+  Platnost nabídky vypršela dne:
+  <strong th:text="${#temporals.format(expiredAt,'dd.MM.yyyy HH:mm')}"></strong>
+</p>
+
+<p>
+  Pokud máte zájem o novou nabídku, kontaktujte nás prosím.
+</p>
+
+</body>
+</html>

@@ -20,40 +20,57 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
         http
                 .authorizeHttpRequests(auth -> auth
+
+                        // 🔓 VEŘEJNÉ (bez loginu)
                         .requestMatchers(
                                 "/login",
                                 "/register",
+                                "/error",
                                 "/css/**",
-                                "/js/**"
+                                "/js/**",
+                                "/images/**",
+                                "/favicon.ico",
+                                "/public/**"              // ✅ ZÁKAZNICKÝ TOKEN PŘÍSTUP
                         ).permitAll()
 
-                        // ADMIN
-                        .requestMatchers(
-                                "/admin/**",
-                                "/offers/delete/**"
-                        ).hasRole("ADMIN")
+                        // 🔐 ADMIN
+                        .requestMatchers("/admin/**")
+                        .hasRole("ADMIN")
 
-                        // USER + ADMIN
-                        .requestMatchers(
-                                "/offers/**"
-                        ).hasAnyRole("USER", "ADMIN")
+                        // 🔐 USER + ADMIN
+                        .requestMatchers("/offers/**")
+                        .hasAnyRole("USER", "ADMIN")
 
                         .anyRequest().authenticated()
                 )
+
+                // ================= LOGIN =================
                 .formLogin(form -> form
                         .loginPage("/login")
+                        .loginProcessingUrl("/login")
                         .defaultSuccessUrl("/", true)
+                        .failureUrl("/login?error")
                         .permitAll()
                 )
+
+                // ================= LOGOUT =================
                 .logout(logout -> logout
+                        .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
                         .permitAll()
                 )
+
+                // ================= CSRF =================
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/h2-console/**")
                 )
+
+                // ================= HEADERS =================
                 .headers(headers -> headers
                         .addHeaderWriter(
                                 new XFrameOptionsHeaderWriter(

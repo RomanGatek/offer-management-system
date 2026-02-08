@@ -5,6 +5,11 @@
 </head>
 <body>
 <h2>Vítejte v systému!</h2>
-<a th:href="@{/logout}">Odhlásit se</a>
+<form th:action="@{/logout}" method="post" style="display:inline">
+    <input type="hidden"
+           th:name="${_csrf.parameterName}"
+           th:value="${_csrf.token}" />
+    <button type="submit">🚪 Odhlásit se</button>
+</form>
 </body>
 </html>
