@@ -5,5 +5,6 @@ public enum OfferStatus {
     ODESLANA,    // odesláno zákazníkovi (email / link)
     K_UPRAVE,    // vráceno zákazníkem k úpravě
     PRIJATA,    // přijato zákazníkem
-    ZAMITNUTA   // zamítnuto zákazníkem
+    ZAMITNUTA,   // zamítnuto zákazníkem
+    EXPIROVANA
 }

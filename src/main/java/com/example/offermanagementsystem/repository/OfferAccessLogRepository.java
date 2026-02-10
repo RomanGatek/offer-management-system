@@ -6,13 +6,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface OfferAccessLogRepository
         extends JpaRepository<OfferAccessLog, Long> {
 
     // ===============================
-    // POČET OTEVŘENÍ
+    // POČET OTEVŘENÍ (VIEW)
     // ===============================
     long countByOfferAndAction(Offer offer, String action);
 
@@ -28,20 +29,30 @@ public interface OfferAccessLogRepository
     LocalDateTime findLastViewTime(Offer offer);
 
     // ===============================
-    // EXISTUJE REAKCE?
-    // ===============================
-    boolean existsByOfferAndActionIn(
-            Offer offer,
-            Iterable<String> actions
-    );
-
-    // ===============================
-    // POSLEDNÍ REAKCE ZÁKAZNÍKA
-    // (Spring Data naming → LIMIT 1 OK)
+    // POSLEDNÍ REAKCE
     // ===============================
     Optional<OfferAccessLog>
     findFirstByOfferAndActionInOrderByAccessedAtDesc(
             Offer offer,
-            Iterable<String> actions
+            List<String> actions
     );
+
+    // ===============================
+    // 📊 STATISTIKY – KROK C
+    // ===============================
+    @Query("""
+        select count(distinct l.offer.id)
+        from OfferAccessLog l
+        where l.action = 'VIEW'
+          and l.offer.status = 'ODESLANA'
+    """)
+    long countOpenedOffers();
+
+    @Query("""
+        select count(distinct l.offer.id)
+        from OfferAccessLog l
+        where l.action = 'ACCEPT'
+          and l.offer.status = 'ODESLANA'
+    """)
+    long countAcceptedOffers();
 }

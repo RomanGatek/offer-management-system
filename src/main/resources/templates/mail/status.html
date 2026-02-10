@@ -1,0 +1,21 @@
+<div th:fragment="this">
+
+    <p>
+        Dobrý den <strong th:text="${offer.customerName}">Zákazník</strong>,
+    </p>
+
+    <p>
+        stav Vaší nabídky byl změněn na:
+        <strong th:text="${offer.status}">STAV</strong>
+    </p>
+
+    <div class="price">
+        Cena: <span th:text="${offer.totalPrice}">0</span> Kč
+    </div>
+
+    <a class="button"
+       th:href="${publicUrl}">
+        Zobrazit nabídku
+    </a>
+
+</div>

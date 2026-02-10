@@ -2,109 +2,156 @@ package com.example.offermanagementsystem.service;
 
 import com.example.offermanagementsystem.model.Offer;
 import com.example.offermanagementsystem.model.OfferStatus;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 @Service
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final JavaMailSender mailSender;
+    private final TemplateEngine templateEngine;
 
-    // 🔹 VEŘEJNÁ BASE URL (zatím natvrdo – později do configu)
     private static final String BASE_URL = "http://localhost:8080";
 
-    // ===============================
-    // BEZPEČNÉ ODESLÁNÍ
-    // ===============================
+    public EmailService(
+            JavaMailSender mailSender,
+            TemplateEngine templateEngine
+    ) {
+        this.mailSender = mailSender;
+        this.templateEngine = templateEngine;
+    }
+
+    // ======================================================
+    // VEŘEJNÉ API – SEND
+    // ======================================================
+
     public void sendStatusEmailSafe(Offer offer) {
         try {
-            sendStatusEmail(offer);
-        } catch (MailException e) {
-            System.err.println(
-                    "Nepodařilo se odeslat email k nabídce ID="
-                            + offer.getId() + ": " + e.getMessage()
+            sendHtmlEmail(
+                    offer,
+                    subjectForStatus(offer),
+                    "mail/status :: this"
             );
+        } catch (Exception e) {
+            logError("status", offer, e);
         }
     }
 
-    // ===============================
-    // HLAVNÍ EMAIL
-    // ===============================
-    private void sendStatusEmail(Offer offer) {
+    public void sendCustomerReminderSafe(Offer offer) {
+        sendCustomerReminderSafe(offer, 7);
+    }
 
+    public void sendCustomerReminderSafe(Offer offer, int days) {
+        try {
+            String template =
+                    days >= 14
+                            ? "mail/reminder-14 :: this"
+                            : "mail/reminder-7 :: this";
+
+            sendHtmlEmail(
+                    offer,
+                    reminderSubject(days),
+                    template
+            );
+        } catch (Exception e) {
+            logError("reminder " + days, offer, e);
+        }
+    }
+
+    public void sendExpirationEmailSafe(Offer offer) {
+        try {
+            sendHtmlEmail(
+                    offer,
+                    "Platnost nabídky vypršela",
+                    "mail/expired :: this"
+            );
+        } catch (Exception e) {
+            logError("expiration", offer, e);
+        }
+    }
+
+    // ======================================================
+    // PREVIEW (ADMIN)
+    // ======================================================
+
+    public String renderEmailPreview(
+            Offer offer,
+            String subject,
+            String contentTemplate
+    ) {
         String publicUrl =
                 BASE_URL + "/public/offers/" + offer.getCustomerToken();
 
-        SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setTo(offer.getCustomerEmail());
-        msg.setSubject("Stav nabídky: " + offer.getStatus());
-        msg.setText(buildText(offer, publicUrl));
+        Context context = new Context();
+        context.setVariable("offer", offer);
+        context.setVariable("publicUrl", publicUrl);
+        context.setVariable("subject", subject);
+        context.setVariable("contentTemplate", contentTemplate);
 
-        mailSender.send(msg);
+        return templateEngine.process("mail/base", context);
     }
 
-    // ===============================
-    // TEXT EMAILU
-    // ===============================
-    private String buildText(Offer offer, String publicUrl) {
+    public String previewSubjectForStatus(Offer offer) {
+        return subjectForStatus(offer);
+    }
 
+    // ======================================================
+    // INTERNÍ SEND ENGINE
+    // ======================================================
+
+    private void sendHtmlEmail(
+            Offer offer,
+            String subject,
+            String contentTemplate
+    ) throws MessagingException {
+
+        String html =
+                renderEmailPreview(offer, subject, contentTemplate);
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper =
+                new MimeMessageHelper(message, true, "UTF-8");
+
+        helper.setTo(offer.getCustomerEmail());
+        helper.setSubject(subject);
+        helper.setText(html, true);
+
+        mailSender.send(message);
+    }
+
+    // ======================================================
+    // SUBJECTY
+    // ======================================================
+
+    private String subjectForStatus(Offer offer) {
         return switch (offer.getStatus()) {
-
-            case ODESLANA -> """
-                    Dobrý den %s,
-
-                    Vaše nabídka byla ODESLÁNA.
-                    Cena: %s Kč
-
-                    Nabídku si můžete zobrazit zde:
-                    %s
-
-                    S pozdravem
-                    """.formatted(
-                    offer.getCustomerName(),
-                    offer.getTotalPrice(),
-                    publicUrl
-            );
-
-            case PRIJATA -> """
-                    Dobrý den %s,
-
-                    Vaše nabídka byla PŘIJATA 🎉
-
-                    Detail nabídky:
-                    %s
-                    """.formatted(
-                    offer.getCustomerName(),
-                    publicUrl
-            );
-
-            case ZAMITNUTA -> """
-                    Dobrý den %s,
-
-                    Vaše nabídka byla ZAMÍTNUTA.
-
-                    Detail nabídky:
-                    %s
-                    """.formatted(
-                    offer.getCustomerName(),
-                    publicUrl
-            );
-
-            default -> """
-                    Dobrý den %s,
-
-                    Došlo ke změně stavu Vaší nabídky.
-
-                    Detail:
-                    %s
-                    """.formatted(
-                    offer.getCustomerName(),
-                    publicUrl
-            );
+            case ODESLANA -> "Nová nabídka k potvrzení";
+            case PRIJATA -> "Nabídka byla přijata";
+            case ZAMITNUTA -> "Nabídka byla zamítnuta";
+            default -> "Změna stavu nabídky";
         };
+    }
+
+    private String reminderSubject(int days) {
+        return days >= 14
+                ? "Poslední připomenutí nabídky"
+                : "Připomenutí nabídky";
+    }
+
+    // ======================================================
+    // LOGGING
+    // ======================================================
+
+    private void logError(String type, Offer offer, Exception e) {
+        System.err.println(
+                "Nepodařilo se odeslat " + type +
+                        " email k nabídce ID=" + offer.getId() +
+                        ": " + e.getMessage()
+        );
     }
 }

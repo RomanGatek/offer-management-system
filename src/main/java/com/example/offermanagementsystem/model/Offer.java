@@ -51,6 +51,21 @@ public class Offer {
     @Column(nullable = false)
     private LocalDateTime tokenExpiresAt;
 
+    // ================= REMINDERY =================
+
+    /** první reminder (7 dní) */
+    private LocalDateTime firstReminderSentAt;
+
+    /** druhý reminder (14 dní) */
+    private LocalDateTime secondReminderSentAt;
+
+    // ================= EXPIRACE =================
+
+    private boolean expired = false;
+
+    private LocalDateTime expiredAt;
+
+
     // ================= AUDIT =================
 
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -66,7 +81,34 @@ public class Offer {
         return LocalDateTime.now().isBefore(tokenExpiresAt);
     }
 
-    // ================= GETTERS / SETTERS =================
+    /** B7.1 – první reminder */
+    public boolean needsFirstReminder(int days) {
+        return status == OfferStatus.ODESLANA
+                && !archived
+                && !expired
+                && firstReminderSentAt == null
+                && createdAt.isBefore(LocalDateTime.now().minusDays(days));
+    }
+
+    /** B7.2 – druhý reminder */
+    public boolean needsSecondReminder(int days) {
+        return status == OfferStatus.ODESLANA
+                && !archived
+                && !expired
+                && firstReminderSentAt != null
+                && secondReminderSentAt == null
+                && createdAt.isBefore(LocalDateTime.now().minusDays(days));
+    }
+
+    /** B8 – expirace nabídky */
+    public boolean shouldExpire(int days) {
+        return status == OfferStatus.ODESLANA
+                && !archived
+                && !expired
+                && createdAt.isBefore(LocalDateTime.now().minusDays(days));
+    }
+
+    // ================= GETTERS =================
 
     public Long getId() { return id; }
     public String getCustomerName() { return customerName; }
@@ -77,10 +119,16 @@ public class Offer {
     public Integer getRevision() { return revision; }
     public boolean isInEdit() { return inEdit; }
     public boolean isArchived() { return archived; }
+    public boolean isExpired() { return expired; }
+    public LocalDateTime getExpiredAt() { return expiredAt; }
     public String getCustomerToken() { return customerToken; }
     public LocalDateTime getTokenExpiresAt() { return tokenExpiresAt; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getFirstReminderSentAt() { return firstReminderSentAt; }
+    public LocalDateTime getSecondReminderSentAt() { return secondReminderSentAt; }
     public User getUser() { return user; }
+
+    // ================= SETTERS =================
 
     public void setCustomerName(String v) { this.customerName = v; }
     public void setCustomerEmail(String v) { this.customerEmail = v; }
@@ -90,6 +138,10 @@ public class Offer {
     public void setRevision(Integer v) { this.revision = v; }
     public void setInEdit(boolean v) { this.inEdit = v; }
     public void setArchived(boolean v) { this.archived = v; }
+    public void setExpired(boolean v) { this.expired = v; }
+    public void setExpiredAt(LocalDateTime v) { this.expiredAt = v; }
     public void setUser(User v) { this.user = v; }
     public void setTokenExpiresAt(LocalDateTime v) { this.tokenExpiresAt = v; }
+    public void setFirstReminderSentAt(LocalDateTime v) { this.firstReminderSentAt = v; }
+    public void setSecondReminderSentAt(LocalDateTime v) { this.secondReminderSentAt = v; }
 }

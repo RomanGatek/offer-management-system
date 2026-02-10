@@ -1,6 +1,5 @@
 // ======================================================
 // 🔧 BUILD SCRIPT – classpath pro Flyway Gradle plugin
-// (nutné pro PostgreSQL podporu u flywayRepair)
 // ======================================================
 buildscript {
 	repositories {
@@ -46,18 +45,22 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-security")
 
+	// ================= VALIDATION =================
+	// ✅ SPRING WAY (ne přímo Hibernate)
+	implementation("org.springframework.boot:spring-boot-starter-validation")
+
+	// ================= MAIL (HTML EMAILY) =================
+	implementation("org.springframework.boot:spring-boot-starter-mail")
+	implementation("org.springframework:spring-context-support")
+
 	// ================= PDF =================
 	implementation("com.itextpdf:itextpdf:5.5.13.3")
 	implementation("com.github.librepdf:openpdf:1.3.30")
 
-	// ================= DB & MIGRATIONS (Spring Boot) =================
+	// ================= DB & MIGRATIONS =================
 	implementation("org.postgresql:postgresql:42.7.3")
 	implementation("org.flywaydb:flyway-core")
 	implementation("org.flywaydb:flyway-database-postgresql")
-
-	// ================= VALIDATION & MAIL =================
-	implementation("org.hibernate.validator:hibernate-validator:8.0.1.Final")
-	implementation("org.springframework.boot:spring-boot-starter-mail")
 
 	// ================= TESTS =================
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -80,6 +83,6 @@ flyway {
 	schemas = arrayOf("public")
 	locations = arrayOf("filesystem:src/main/resources/db/migration")
 
-	// ⚠️ DOČASNĚ povolit clean (jen pro DEV!)
+	// ⚠️ DEV ONLY
 	cleanDisabled = false
 }
