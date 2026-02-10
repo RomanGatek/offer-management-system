@@ -4,31 +4,70 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "offer_access_log")
+@Table(
+        name = "offer_access_log",
+        indexes = {
+                @Index(name = "idx_offer_action", columnList = "offer_id, action"),
+                @Index(name = "idx_offer_accessed_at", columnList = "accessed_at")
+        }
+)
 public class OfferAccessLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // ==================================
+    // VAZBA NA NABÍDKU
+    // ==================================
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "offer_id", nullable = false)
     private Offer offer;
 
+    // ==================================
+    // KDY
+    // ==================================
     @Column(name = "accessed_at", nullable = false)
     private LocalDateTime accessedAt;
 
+    // ==================================
+    // KDO / ODKUD
+    // ==================================
     @Column(name = "ip_address", length = 45)
     private String ipAddress;
 
     @Column(name = "user_agent", columnDefinition = "TEXT")
     private String userAgent;
 
-    @Column(nullable = false, length = 20)
-    private String action; // VIEW / ACCEPT / REJECT
+    // ==================================
+    // CO SE STALO (AUDIT)
+    // ==================================
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private AuditAction action;
 
-    // ===== getters / setters =====
+    // ==================================
+    // KONSTRUKTORY
+    // ==================================
+    public OfferAccessLog() {
+    }
 
+    public OfferAccessLog(
+            Offer offer,
+            AuditAction action,
+            String ipAddress,
+            String userAgent
+    ) {
+        this.offer = offer;
+        this.action = action;
+        this.ipAddress = ipAddress;
+        this.userAgent = userAgent;
+        this.accessedAt = LocalDateTime.now();
+    }
+
+    // ==================================
+    // GETTERY / SETTERY
+    // ==================================
     public Long getId() {
         return id;
     }
@@ -65,11 +104,11 @@ public class OfferAccessLog {
         this.userAgent = userAgent;
     }
 
-    public String getAction() {
+    public AuditAction getAction() {
         return action;
     }
 
-    public void setAction(String action) {
+    public void setAction(AuditAction action) {
         this.action = action;
     }
 }

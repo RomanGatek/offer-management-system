@@ -3,19 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <title>Nabídka expirovala</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    .box { max-width: 500px; margin: auto; text-align: center; }
+    h2 { color: #d32f2f; }
+  </style>
 </head>
 <body>
 
-<h2>⏳ Nabídka již není platná</h2>
+<div class="box">
+  <h2>⏳ Nabídka již není platná</h2>
 
-<p>
-  Platnost nabídky vypršela dne:
-  <strong th:text="${#temporals.format(expiredAt,'dd.MM.yyyy HH:mm')}"></strong>
-</p>
+  <p>
+    Platnost nabídky vypršela dne:<br>
+    <strong th:text="${#temporals.format(expiredAt,'dd.MM.yyyy HH:mm')}"></strong>
+  </p>
 
-<p>
-  Pokud máte zájem o novou nabídku, kontaktujte nás prosím.
-</p>
+  <p>
+    Pokud máte o nabídku stále zájem,<br>
+    kontaktujte nás prosím.
+  </p>
+</div>
 
 </body>
 </html>

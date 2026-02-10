@@ -3,51 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <title>Nabídka</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .box { border: 1px solid #ddd; padding: 16px; border-radius: 6px; max-width: 700px; }
+        .actions form { margin-top: 10px; }
+        .muted { color: #777; font-size: 13px; }
+    </style>
 </head>
 <body>
 
-<h2>Nabídka pro zákazníka</h2>
+<div class="box">
 
-<p>
-    <strong>Zákazník:</strong> <span th:text="${offer.customerName}"></span><br>
-    <strong>Popis:</strong> <span th:text="${offer.description}"></span><br>
-    <strong>Cena:</strong> <strong th:text="${offer.totalPrice} + ' Kč'"></strong><br>
-    <strong>Stav:</strong> <span th:text="${offer.status}"></span><br>
-    <strong>Platnost do:</strong>
-    <span th:text="${#temporals.format(offer.tokenExpiresAt,'dd.MM.yyyy')}"></span>
-</p>
+    <h2>Nabídka pro zákazníka</h2>
 
-<hr>
+    <p>
+        <strong>Zákazník:</strong> <span th:text="${offer.customerName}"></span><br>
+        <strong>Popis:</strong> <span th:text="${offer.description}"></span><br>
+        <strong>Cena:</strong> <strong th:text="${offer.totalPrice} + ' Kč'"></strong><br>
+        <strong>Stav:</strong> <span th:text="${offer.status}"></span><br>
+        <strong>Platnost do:</strong>
+        <span th:text="${#temporals.format(offer.tokenExpiresAt,'dd.MM.yyyy')}"></span>
+    </p>
 
-<div th:if="${offer.status.name() == 'ODESLANA'}">
+    <hr>
 
-    <form th:action="@{/public/offers/{token}/accept(token=${offer.customerToken})}"
-          method="post">
-        <button type="submit">✅ Přijmout nabídku</button>
-    </form>
+    <!-- 🔑 TOKEN – pouze pro testování -->
+    <p class="muted">
+        Token: <code th:text="${offer.customerToken}"></code>
+    </p>
 
-    <form th:action="@{/public/offers/{token}/reject(token=${offer.customerToken})}"
-          method="post" style="margin-top:10px">
+    <!-- 📜 AUDIT -->
+    <p>
+        <a th:href="@{/public/offers/{token}/audit(token=${offer.customerToken})}">
+            📜 Zobrazit průběh nabídky
+        </a>
+    </p>
+
+    <hr>
+
+    <div th:if="${offer.status.name() == 'ODESLANA'}" class="actions">
+
+        <form th:action="@{/public/offers/{token}/accept(token=${offer.customerToken})}"
+              method="post">
+            <button type="submit">✅ Přijmout nabídku</button>
+        </form>
+
+        <form th:action="@{/public/offers/{token}/reject(token=${offer.customerToken})}"
+              method="post">
         <textarea name="note" rows="3" cols="50"
                   placeholder="Důvod (volitelné)"></textarea><br>
-        <button type="submit">❌ Zamítnout nabídku</button>
-    </form>
+            <button type="submit">❌ Zamítnout nabídku</button>
+        </form>
+
+    </div>
+
+    <div th:if="${offer.status.name() == 'PRIJATA'}">
+        <p style="color:green;font-weight:bold;">✔ Nabídka byla přijata</p>
+    </div>
+
+    <div th:if="${offer.status.name() == 'ZAMITNUTA'}">
+        <p style="color:red;font-weight:bold;">✖ Nabídka byla zamítnuta</p>
+    </div>
+
+    <hr>
+
+    <p class="muted">
+        Tento odkaz je unikátní a platí maximálně 30 dní.
+    </p>
 
 </div>
-
-<div th:if="${offer.status.name() == 'PRIJATA'}">
-    <p style="color:green;font-weight:bold;">✔ Nabídka byla přijata</p>
-</div>
-
-<div th:if="${offer.status.name() == 'ZAMITNUTA'}">
-    <p style="color:red;font-weight:bold;">✖ Nabídka byla zamítnuta</p>
-</div>
-
-<hr>
-
-<p style="color:gray;font-size:14px">
-    Tento odkaz je unikátní a platí maximálně 30 dní.
-</p>
 
 </body>
 </html>

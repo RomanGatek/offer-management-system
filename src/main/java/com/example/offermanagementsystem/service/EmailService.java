@@ -1,7 +1,7 @@
 package com.example.offermanagementsystem.service;
 
-import com.example.offermanagementsystem.model.Offer;
-import com.example.offermanagementsystem.model.OfferStatus;
+import com.example.offermanagementsystem.model.*;
+import com.example.offermanagementsystem.repository.OfferAccessLogRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -10,44 +10,48 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import java.time.LocalDateTime;
+
 @Service
 public class EmailService {
 
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
+    private final OfferAccessLogRepository accessLogRepository;
 
     private static final String BASE_URL = "http://localhost:8080";
 
     public EmailService(
             JavaMailSender mailSender,
-            TemplateEngine templateEngine
+            TemplateEngine templateEngine,
+            OfferAccessLogRepository accessLogRepository
     ) {
         this.mailSender = mailSender;
         this.templateEngine = templateEngine;
+        this.accessLogRepository = accessLogRepository;
     }
 
-    // ======================================================
+    // ===============================
     // VEŘEJNÉ API – SEND
-    // ======================================================
-
+    // ===============================
     public void sendStatusEmailSafe(Offer offer) {
         try {
             sendHtmlEmail(
                     offer,
                     subjectForStatus(offer),
-                    "mail/status :: this"
+                    "mail/status :: this",
+                    AuditAction.EMAIL_SENT
             );
         } catch (Exception e) {
             logError("status", offer, e);
         }
     }
 
-    public void sendCustomerReminderSafe(Offer offer) {
-        sendCustomerReminderSafe(offer, 7);
-    }
-
     public void sendCustomerReminderSafe(Offer offer, int days) {
         try {
+            AuditAction action =
+                    days >= 14 ? AuditAction.REMINDER_14 : AuditAction.REMINDER_7;
+
             String template =
                     days >= 14
                             ? "mail/reminder-14 :: this"
@@ -56,10 +60,11 @@ public class EmailService {
             sendHtmlEmail(
                     offer,
                     reminderSubject(days),
-                    template
+                    template,
+                    action
             );
         } catch (Exception e) {
-            logError("reminder " + days, offer, e);
+            logError("reminder", offer, e);
         }
     }
 
@@ -68,7 +73,8 @@ public class EmailService {
             sendHtmlEmail(
                     offer,
                     "Platnost nabídky vypršela",
-                    "mail/expired :: this"
+                    "mail/expired :: this",
+                    AuditAction.EXPIRED
             );
         } catch (Exception e) {
             logError("expiration", offer, e);
@@ -76,42 +82,26 @@ public class EmailService {
     }
 
     // ======================================================
-    // PREVIEW (ADMIN)
+    // 🔍 PREVIEW – ADMIN (CHYBĚJÍCÍ METODA)
     // ======================================================
-
-    public String renderEmailPreview(
-            Offer offer,
-            String subject,
-            String contentTemplate
-    ) {
-        String publicUrl =
-                BASE_URL + "/public/offers/" + offer.getCustomerToken();
-
-        Context context = new Context();
-        context.setVariable("offer", offer);
-        context.setVariable("publicUrl", publicUrl);
-        context.setVariable("subject", subject);
-        context.setVariable("contentTemplate", contentTemplate);
-
-        return templateEngine.process("mail/base", context);
-    }
-
+    /**
+     * Používá AdminEmailPreviewController
+     */
     public String previewSubjectForStatus(Offer offer) {
         return subjectForStatus(offer);
     }
 
-    // ======================================================
-    // INTERNÍ SEND ENGINE
-    // ======================================================
-
+    // ===============================
+    // SEND ENGINE
+    // ===============================
     private void sendHtmlEmail(
             Offer offer,
             String subject,
-            String contentTemplate
+            String contentTemplate,
+            AuditAction auditAction
     ) throws MessagingException {
 
-        String html =
-                renderEmailPreview(offer, subject, contentTemplate);
+        String html = renderEmailPreview(offer, subject, contentTemplate);
 
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper =
@@ -122,12 +112,44 @@ public class EmailService {
         helper.setText(html, true);
 
         mailSender.send(message);
+
+        // ===== AUDIT LOG =====
+        OfferAccessLog log = new OfferAccessLog();
+        log.setOffer(offer);
+        log.setAction(auditAction);
+        log.setAccessedAt(LocalDateTime.now());
+        log.setUserAgent("EMAIL");
+
+        accessLogRepository.save(log);
     }
 
-    // ======================================================
-    // SUBJECTY
-    // ======================================================
+    // ===============================
+    // TEMPLATE
+    // ===============================
+    public String renderEmailPreview(
+            Offer offer,
+            String subject,
+            String contentTemplate
+    ) {
+        Context context = new Context();
+        context.setVariable("offer", offer);
+        context.setVariable("subject", subject);
+        context.setVariable("contentTemplate", contentTemplate);
+        context.setVariable(
+                "publicUrl",
+                BASE_URL + "/public/offers/" + offer.getCustomerToken()
+        );
+        context.setVariable(
+                "trackingPixelUrl",
+                BASE_URL + "/track/open/" + offer.getCustomerToken()
+        );
 
+        return templateEngine.process("mail/base", context);
+    }
+
+    // ===============================
+    // SUBJECTY
+    // ===============================
     private String subjectForStatus(Offer offer) {
         return switch (offer.getStatus()) {
             case ODESLANA -> "Nová nabídka k potvrzení";
@@ -143,10 +165,9 @@ public class EmailService {
                 : "Připomenutí nabídky";
     }
 
-    // ======================================================
+    // ===============================
     // LOGGING
-    // ======================================================
-
+    // ===============================
     private void logError(String type, Offer offer, Exception e) {
         System.err.println(
                 "Nepodařilo se odeslat " + type +

@@ -11,6 +11,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Controller
 @RequestMapping("/public")
@@ -51,10 +52,31 @@ public class PublicOfferController {
             return "public/offer-expired";
         }
 
-        logAccess(offer, "VIEW", request);
+        if (!accessLogRepository.existsByOfferAndAction(offer, AuditAction.VIEW)) {
+            logAccess(offer, AuditAction.VIEW, request);
+        }
 
         model.addAttribute("offer", offer);
         return "public/offer-detail";
+    }
+
+    // ===============================
+    // 📜 VEŘEJNÁ TIMELINE (M)
+    // ===============================
+    @GetMapping("/offers/{token}/timeline")
+    public String publicTimeline(@PathVariable String token, Model model) {
+
+        Offer offer = offerRepository
+                .findByCustomerToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Neplatný odkaz"));
+
+        List<OfferAccessLog> logs =
+                accessLogRepository.findByOfferOrderByAccessedAtAsc(offer);
+
+        model.addAttribute("offer", offer);
+        model.addAttribute("logs", logs);
+
+        return "public/offer-timeline";
     }
 
     // ===============================
@@ -65,15 +87,13 @@ public class PublicOfferController {
             @PathVariable String token,
             HttpServletRequest request
     ) {
-        Offer offer = offerRepository
-                .findByCustomerToken(token)
-                .orElseThrow();
+        Offer offer = offerRepository.findByCustomerToken(token).orElseThrow();
 
         if (!offer.isTokenValid() || offer.getStatus() != OfferStatus.ODESLANA) {
             return "redirect:/public/offers/" + token;
         }
 
-        logAccess(offer, "ACCEPT", request);
+        logAccess(offer, AuditAction.ACCEPT, request);
         changeStatus(offer, OfferStatus.PRIJATA, "Zákazník přijal nabídku");
 
         return "redirect:/public/offers/" + token + "?accepted";
@@ -88,15 +108,13 @@ public class PublicOfferController {
             @RequestParam(required = false) String note,
             HttpServletRequest request
     ) {
-        Offer offer = offerRepository
-                .findByCustomerToken(token)
-                .orElseThrow();
+        Offer offer = offerRepository.findByCustomerToken(token).orElseThrow();
 
         if (!offer.isTokenValid() || offer.getStatus() != OfferStatus.ODESLANA) {
             return "redirect:/public/offers/" + token;
         }
 
-        logAccess(offer, "REJECT", request);
+        logAccess(offer, AuditAction.REJECT, request);
 
         changeStatus(
                 offer,
@@ -112,7 +130,7 @@ public class PublicOfferController {
     // ===============================
     private void logAccess(
             Offer offer,
-            String action,
+            AuditAction action,
             HttpServletRequest request
     ) {
         OfferAccessLog log = new OfferAccessLog();
@@ -121,7 +139,6 @@ public class PublicOfferController {
         log.setAccessedAt(LocalDateTime.now());
         log.setIpAddress(request.getRemoteAddr());
         log.setUserAgent(request.getHeader("User-Agent"));
-
         accessLogRepository.save(log);
     }
 

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Audit – nabídka</title>
+
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { margin-bottom: 6px; }
+    .meta { margin-bottom: 14px; color: #555; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f5f5f5;
+      text-align: left;
+    }
+
+    tr:nth-child(even) {
+      background: #fafafa;
+    }
+
+    .action { font-weight: bold; }
+
+    .action.ok { color: #2e7d32; }
+    .action.fail { color: #c62828; }
+    .action.email { color: #1565c0; }
+
+    .muted {
+      color: #777;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>📜 Audit log nabídky</h1>
+
+<div class="meta">
+  <b>ID nabídky:</b> <span th:text="${offer.id}"></span><br>
+  <b>Zákazník:</b> <span th:text="${offer.customerName}"></span><br>
+  <b>Stav:</b> <span th:text="${offer.status}"></span>
+</div>
+
+<table>
+  <thead>
+  <tr>
+    <th style="width:180px;">Čas</th>
+    <th style="width:260px;">Událost</th>
+    <th>Detail</th>
+  </tr>
+  </thead>
+
+  <tbody>
+  <tr th:each="log : ${logs}">
+    <td th:text="${#temporals.format(log.accessedAt, 'dd.MM.yyyy HH:mm:ss')}"></td>
+
+    <td class="action"
+        th:text="${auditLabel.labelFor(log.action)}"
+        th:classappend="
+          ${log.action.name().startsWith('EMAIL') ? ' email' : ''}
+          ${log.action.name() eq 'ACCEPT' ? ' ok' : ''}
+          ${log.action.name() eq 'REJECT' ? ' fail' : ''}
+        ">
+    </td>
+
+    <td>
+      <div th:if="${log.ipAddress != null}">
+        IP: <span th:text="${log.ipAddress}"></span>
+      </div>
+      <div th:if="${log.userAgent != null}" class="muted">
+        UA: <span th:text="${log.userAgent}"></span>
+      </div>
+    </td>
+  </tr>
+
+  <tr th:if="${#lists.isEmpty(logs)}">
+    <td colspan="3" class="muted">Žádné auditní záznamy.</td>
+  </tr>
+  </tbody>
+</table>
+
+<br>
+<a href="/admin">← Zpět na dashboard</a>
+
+</body>
+</html>

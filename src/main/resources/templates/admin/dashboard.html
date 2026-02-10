@@ -6,21 +6,69 @@
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     h1, h2 { margin: 0 0 12px; }
+
     table { border-collapse: collapse; width: 100%; }
     th, td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
     th { background: #f5f5f5; text-align: left; }
     tr:nth-child(even) { background: #fafafa; }
-    .stats { margin-bottom: 20px; padding: 12px; border: 1px solid #ccc; background: #fff; }
-    .badge { display: inline-block; padding: 2px 6px; border-radius: 6px; font-weight: bold; }
+
+    .stats {
+      margin-bottom: 20px;
+      padding: 12px;
+      border: 1px solid #ccc;
+      background: #fff;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 12px;
+    }
     .badge-expired { background: #f3e5f5; color: #6a1b9a; }
-    .badge-accept { background: #e8f5e9; color: #1b5e20; }
-    .badge-reject { background: #ffebee; color: #b71c1c; }
-    .badge-wait { background: #fff3e0; color: #e65100; }
-    .badge-stale { background: #ffebee; color: #c62828; }
+    .badge-accept  { background: #e8f5e9; color: #1b5e20; }
+    .badge-reject  { background: #ffebee; color: #b71c1c; }
+    .badge-wait    { background: #fff3e0; color: #e65100; }
+    .badge-stale   { background: #ffebee; color: #c62828; }
+
     .muted { color: #888; }
     .danger { color: #d32f2f; font-weight: bold; }
-    .actions form { display: inline; margin: 0 6px 0 0; }
-    button { cursor: pointer; }
+
+    .filter-box { margin-bottom: 14px; }
+
+    /* ===== BUTTONS (sjednocení Akcí) ===== */
+    .actions { white-space: nowrap; }
+
+    .btn {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      background: #f5f5f5;
+      color: #333;
+      text-decoration: none;
+      font-size: 13px;
+      cursor: pointer;
+      margin: 0 6px 6px 0;
+    }
+
+    .btn:hover {
+      background: #e0e0e0;
+    }
+
+    .btn-danger {
+      background: #fff3e0;
+      border-color: #ffb74d;
+    }
+
+    .btn-danger:hover {
+      background: #ffe0b2;
+    }
+
+    button.btn {
+      font-family: inherit;
+    }
   </style>
 </head>
 
@@ -43,6 +91,20 @@
   <b th:text="${acceptRate} + '%'"></b>
 </div>
 
+<!-- ===== FILTR EXPIROVANÝCH ===== -->
+<div class="filter-box">
+  <form method="get" action="/admin">
+    <label>
+      <input type="checkbox"
+             name="showExpired"
+             value="true"
+             th:checked="${showExpired}">
+      Zobrazit expirované nabídky
+    </label>
+    <button type="submit" class="btn">🔍 Použít</button>
+  </form>
+</div>
+
 <table cellpadding="6">
   <thead>
   <tr>
@@ -53,7 +115,7 @@
     <th style="width:160px;">Naposledy</th>
     <th>Reakce</th>
     <th style="width:170px;">Reminder</th>
-    <th style="width:140px;">Akce</th>
+    <th style="width:200px;">Akce</th>
   </tr>
   </thead>
 
@@ -63,39 +125,31 @@
     <td th:text="${offer.customerName}"></td>
     <td th:text="${offer.status}"></td>
 
-    <!-- OTEVŘENÍ -->
     <td th:text="${viewsMap[offer.id]} + '×'"></td>
 
-    <!-- NAPOSLEDY -->
     <td>
       <span th:if="${lastViewedMap[offer.id] != null}"
             th:text="${#temporals.format(lastViewedMap[offer.id],'dd.MM.yyyy HH:mm')}"></span>
       <span th:if="${lastViewedMap[offer.id] == null}" class="danger">nikdy</span>
     </td>
 
-    <!-- REAKCE / STAVY -->
     <td>
-      <!-- EXPIROVÁNO – priorita -->
       <div th:if="${expiredMap[offer.id]}">
         <span class="badge badge-expired">⛔ expirováno</span>
       </div>
 
-      <!-- PŘIJATA -->
       <div th:if="${!expiredMap[offer.id] and reactionMap[offer.id] == 'ACCEPT'}">
         <span class="badge badge-accept">✔ přijata</span>
       </div>
 
-      <!-- ZAMÍTNUTA -->
       <div th:if="${!expiredMap[offer.id] and reactionMap[offer.id] == 'REJECT'}">
         <span class="badge badge-reject">✖ zamítnuta</span>
       </div>
 
-      <!-- ČEKÁ -->
       <div th:if="${!expiredMap[offer.id] and reactionMap[offer.id] == null}">
         <span class="badge badge-wait">⏳ čeká</span>
       </div>
 
-      <!-- 7 DNÍ BEZ REAKCE -->
       <div th:if="${!expiredMap[offer.id] and staleMap[offer.id]}" style="margin-top:6px;">
         <span class="badge badge-stale">⚠ 7 dní bez reakce</span>
       </div>
@@ -104,23 +158,17 @@
     <!-- REMINDER -->
     <td class="actions">
       <div th:if="${offer.status.name() == 'ODESLANA' and !expiredMap[offer.id]}">
-
         <form th:action="@{/admin/offers/{id}/reminder/7(id=${offer.id})}"
-              method="post">
-          <input type="hidden"
-                 th:name="${_csrf.parameterName}"
-                 th:value="${_csrf.token}"/>
-          <button type="submit">🕒 7 dní</button>
+              method="post" style="display:inline">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+          <button type="submit" class="btn">🕒 7 dní</button>
         </form>
 
         <form th:action="@{/admin/offers/{id}/reminder/14(id=${offer.id})}"
-              method="post">
-          <input type="hidden"
-                 th:name="${_csrf.parameterName}"
-                 th:value="${_csrf.token}"/>
-          <button type="submit">⏰ 14 dní</button>
+              method="post" style="display:inline">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+          <button type="submit" class="btn">⏰ 14 dní</button>
         </form>
-
       </div>
 
       <div th:if="${offer.status.name() != 'ODESLANA' or expiredMap[offer.id]}" class="muted">
@@ -129,14 +177,26 @@
     </td>
 
     <!-- AKCE -->
-    <td>
+    <td class="actions">
+
+      <!-- AUDIT – navigace -->
+      <a th:href="@{/admin/offers/{id}/audit(id=${offer.id})}"
+         class="btn">
+        📜 Audit
+      </a>
+
+      <!-- ARCHIVACE – změna dat -->
       <form th:action="@{/admin/offers/{id}/archive(id=${offer.id})}"
-            method="post">
+            method="post"
+            style="display:inline">
         <input type="hidden"
                th:name="${_csrf.parameterName}"
                th:value="${_csrf.token}"/>
-        <button type="submit">📦 Archivovat</button>
+        <button type="submit" class="btn btn-danger">
+          📦 Archivovat
+        </button>
       </form>
+
     </td>
   </tr>
   </tbody>
@@ -165,7 +225,7 @@
         <input type="hidden"
                th:name="${_csrf.parameterName}"
                th:value="${_csrf.token}"/>
-        <button type="submit">♻️ Obnovit</button>
+        <button type="submit" class="btn">♻️ Obnovit</button>
       </form>
     </td>
   </tr>

@@ -1,5 +1,6 @@
 package com.example.offermanagementsystem.repository;
 
+import com.example.offermanagementsystem.model.AuditAction;
 import com.example.offermanagementsystem.model.Offer;
 import com.example.offermanagementsystem.model.OfferAccessLog;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,46 +14,42 @@ public interface OfferAccessLogRepository
         extends JpaRepository<OfferAccessLog, Long> {
 
     // ===============================
-    // POČET OTEVŘENÍ (VIEW)
+    // POČET AKCÍ
     // ===============================
-    long countByOfferAndAction(Offer offer, String action);
+    long countByOfferAndAction(Offer offer, AuditAction action);
 
     // ===============================
-    // POSLEDNÍ OTEVŘENÍ (VIEW)
+    // EXISTUJE AKCE?
+    // ===============================
+    boolean existsByOfferAndAction(Offer offer, AuditAction action);
+
+    // ===============================
+    // POSLEDNÍ VIEW (PUBLIC)
     // ===============================
     @Query("""
         select max(l.accessedAt)
         from OfferAccessLog l
         where l.offer = :offer
-          and l.action = 'VIEW'
+          and l.action = com.example.offermanagementsystem.model.AuditAction.VIEW
     """)
     LocalDateTime findLastViewTime(Offer offer);
 
     // ===============================
-    // POSLEDNÍ REAKCE
+    // POSLEDNÍ REAKCE (ACCEPT / REJECT)
     // ===============================
     Optional<OfferAccessLog>
     findFirstByOfferAndActionInOrderByAccessedAtDesc(
             Offer offer,
-            List<String> actions
+            Iterable<AuditAction> actions
     );
 
     // ===============================
-    // 📊 STATISTIKY – KROK C
+    // 📜 AUDIT – ADMIN (nejnovější nahoře)
     // ===============================
-    @Query("""
-        select count(distinct l.offer.id)
-        from OfferAccessLog l
-        where l.action = 'VIEW'
-          and l.offer.status = 'ODESLANA'
-    """)
-    long countOpenedOffers();
+    List<OfferAccessLog> findByOfferOrderByAccessedAtDesc(Offer offer);
 
-    @Query("""
-        select count(distinct l.offer.id)
-        from OfferAccessLog l
-        where l.action = 'ACCEPT'
-          and l.offer.status = 'ODESLANA'
-    """)
-    long countAcceptedOffers();
+    // ===============================
+    // 📜 AUDIT – ZÁKAZNÍK (timeline)
+    // ===============================
+    List<OfferAccessLog> findByOfferOrderByAccessedAtAsc(Offer offer);
 }

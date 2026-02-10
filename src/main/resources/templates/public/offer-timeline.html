@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Stav nabídky</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { margin-bottom: 10px; }
+        ul { list-style: none; padding: 0; }
+        li { margin-bottom: 10px; }
+        .time { color: #777; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<h1>📜 Průběh nabídky</h1>
+
+<p>
+    <strong>Zákazník:</strong> <span th:text="${offer.customerName}"></span><br>
+    <strong>Aktuální stav:</strong> <span th:text="${offer.status}"></span>
+</p>
+
+<ul>
+    <li th:each="log : ${logs}">
+        <div class="time"
+             th:text="${#temporals.format(log.accessedAt,'dd.MM.yyyy HH:mm')}"></div>
+        <div th:text="${log.action}"></div>
+    </li>
+</ul>
+
+<a th:href="@{/public/offers/{token}(token=${offer.customerToken})}">
+    ← Zpět na nabídku
+</a>
+
+</body>
+</html>
