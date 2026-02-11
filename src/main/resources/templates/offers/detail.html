@@ -103,7 +103,7 @@
     <tbody>
     <tr th:each="h : ${history}">
         <td th:text="${#temporals.format(h.changedAt,'dd.MM.yyyy HH:mm')}"></td>
-        <td th:text="${h.changedBy.username}"></td>
+        <span th:text="${h.changedBy?.username ?: 'Zákazník'}"></span>
         <td th:text="${h.fromStatus}"></td>
         <td th:text="${h.toStatus}"></td>
         <td th:text="${h.note}"></td>

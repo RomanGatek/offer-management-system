@@ -23,8 +23,9 @@ public class OfferStatusHistory {
     @Column(name = "to_status", nullable = false)
     private OfferStatus toStatus;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "changed_by", nullable = false)
+    // NULLABLE – důležité!
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "changed_by", nullable = true)
     private User changedBy;
 
     @Column(name = "changed_at", nullable = false)
@@ -33,7 +34,22 @@ public class OfferStatusHistory {
     @Column(columnDefinition = "TEXT")
     private String note;
 
+    @PrePersist
+    public void prePersist() {
+        if (changedAt == null) {
+            changedAt = LocalDateTime.now();
+        }
+    }
+
     // getters / setters
+
+    public Long getId() { return id; }
+    public Offer getOffer() { return offer; }
+    public OfferStatus getFromStatus() { return fromStatus; }
+    public OfferStatus getToStatus() { return toStatus; }
+    public User getChangedBy() { return changedBy; }
+    public LocalDateTime getChangedAt() { return changedAt; }
+    public String getNote() { return note; }
 
     public void setOffer(Offer offer) { this.offer = offer; }
     public void setFromStatus(OfferStatus fromStatus) { this.fromStatus = fromStatus; }
@@ -41,11 +57,4 @@ public class OfferStatusHistory {
     public void setChangedBy(User changedBy) { this.changedBy = changedBy; }
     public void setChangedAt(LocalDateTime changedAt) { this.changedAt = changedAt; }
     public void setNote(String note) { this.note = note; }
-
-    public Offer getOffer() { return offer; }
-    public OfferStatus getFromStatus() { return fromStatus; }
-    public OfferStatus getToStatus() { return toStatus; }
-    public User getChangedBy() { return changedBy; }
-    public LocalDateTime getChangedAt() { return changedAt; }
-    public String getNote() { return note; }
 }

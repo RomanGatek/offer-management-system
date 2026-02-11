@@ -33,7 +33,7 @@ public class DataInitializer {
                         User u = new User();
                         u.setUsername("admin");
                         u.setPassword(passwordEncoder.encode("admin"));
-                        u.setRole("ROLE_ADMIN");
+                        u.setRole("ADMIN"); // ✅ OPRAVENO
                         System.out.println(">>> Admin created");
                         return userRepository.save(u);
                     });
@@ -43,7 +43,7 @@ public class DataInitializer {
                         User u = new User();
                         u.setUsername("user1");
                         u.setPassword(passwordEncoder.encode("user123"));
-                        u.setRole("ROLE_USER");
+                        u.setRole("USER"); // ✅ OPRAVENO
                         System.out.println(">>> user1 created");
                         return userRepository.save(u);
                     });
@@ -53,13 +53,13 @@ public class DataInitializer {
                         User u = new User();
                         u.setUsername("user2");
                         u.setPassword(passwordEncoder.encode("user123"));
-                        u.setRole("ROLE_USER");
+                        u.setRole("USER"); // ✅ OPRAVENO
                         System.out.println(">>> user2 created");
                         return userRepository.save(u);
                     });
 
             // ===============================
-            // OFFERS (jen pokud žádné nejsou)
+            // OFFERS
             // ===============================
 
             if (offerRepository.count() > 0) {
@@ -68,26 +68,30 @@ public class DataInitializer {
             }
 
             Random random = new Random();
-            OfferStatus[] statuses = OfferStatus.values();
             List<User> users = List.of(admin, user1, user2);
 
             for (int i = 1; i <= 20; i++) {
 
                 Offer offer = new Offer();
+
                 offer.setCustomerName("Zákazník " + i);
                 offer.setCustomerEmail("zakaznik" + i + "@test.cz");
                 offer.setDescription("Testovací nabídka číslo " + i);
+
                 offer.setTotalPrice(
                         BigDecimal.valueOf(1000 + random.nextInt(9000))
                 );
 
-                offer.setStatus(statuses[random.nextInt(statuses.length)]);
+                offer.setStatus(OfferStatus.NOVA); // 🔥 vždy NOVA
                 offer.setRevision(1);
                 offer.setInEdit(false);
                 offer.setArchived(false);
-                //offer.setCreatedAt(LocalDateTime.now());
+                offer.setExpired(false);
 
-                // střídání vlastníků
+                // Token validní 30 dní
+                offer.setTokenExpiresAt(LocalDateTime.now().plusDays(30));
+
+                // Vlastník
                 offer.setUser(users.get(i % users.size()));
 
                 offerRepository.save(offer);

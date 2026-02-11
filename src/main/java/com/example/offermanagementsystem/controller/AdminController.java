@@ -1,12 +1,11 @@
 package com.example.offermanagementsystem.controller;
 
-import com.example.offermanagementsystem.model.AuditAction;
-import com.example.offermanagementsystem.model.Offer;
-import com.example.offermanagementsystem.model.OfferAccessLog;
-import com.example.offermanagementsystem.model.OfferStatus;
+import com.example.offermanagementsystem.model.*;
+import com.example.offermanagementsystem.repository.AuditLogRepository;
 import com.example.offermanagementsystem.repository.OfferAccessLogRepository;
 import com.example.offermanagementsystem.repository.OfferRepository;
 import com.example.offermanagementsystem.service.AuditActionLabelService;
+import com.example.offermanagementsystem.service.AuditService;
 import com.example.offermanagementsystem.service.EmailService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -25,23 +24,31 @@ public class AdminController {
 
     private final OfferRepository offerRepository;
     private final OfferAccessLogRepository accessLogRepository;
+    private final AuditLogRepository auditLogRepository; // NOVÉ
     private final EmailService emailService;
     private final AuditActionLabelService auditActionLabelService;
+    private final AuditService auditService;
+
 
     public AdminController(
             OfferRepository offerRepository,
             OfferAccessLogRepository accessLogRepository,
+            AuditLogRepository auditLogRepository,
             EmailService emailService,
-            AuditActionLabelService auditActionLabelService
+            AuditActionLabelService auditActionLabelService,
+            AuditService auditService
+
     ) {
         this.offerRepository = offerRepository;
         this.accessLogRepository = accessLogRepository;
+        this.auditLogRepository = auditLogRepository;
         this.emailService = emailService;
         this.auditActionLabelService = auditActionLabelService;
+        this.auditService = auditService;
     }
 
     // ======================================================
-    // DASHBOARD
+    // DASHBOARD (PŮVODNÍ LOGIKA ZACHOVÁNA)
     // ======================================================
     @GetMapping
     public String adminDashboard(
@@ -122,21 +129,20 @@ public class AdminController {
     }
 
     // ======================================================
-    // 📜 AUDIT DETAIL
+    // 📜 AUDIT DETAIL (NOVÝ AuditLog)
     // ======================================================
     @GetMapping("/offers/{id}/audit")
     public String audit(@PathVariable Long id, Model model) {
 
         Offer offer = offerRepository.findById(id).orElseThrow();
 
-        List<OfferAccessLog> logs =
-                accessLogRepository.findByOfferOrderByAccessedAtDesc(offer);
+        List<AuditLog> logs =
+                auditService.getOfferAudit(id);
 
         model.addAttribute("offer", offer);
         model.addAttribute("logs", logs);
-        model.addAttribute("auditLabel", auditActionLabelService);
 
-        return "admin/audit";
+        return "admin/offer-audit";
     }
 
     // ======================================================

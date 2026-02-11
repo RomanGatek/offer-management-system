@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Audit – nabídka</title>
+
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { margin-bottom: 6px; }
+        .meta { margin-bottom: 14px; color: #555; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f5f5f5;
+            text-align: left;
+        }
+
+        tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .action { font-weight: bold; }
+
+        .ok { color: #2e7d32; }
+        .fail { color: #c62828; }
+        .email { color: #1565c0; }
+
+        .section {
+            font-size: 12px;
+            color: #555;
+        }
+
+        .muted {
+            color: #777;
+            font-size: 12px;
+        }
+
+        .value-change {
+            font-size: 13px;
+            margin-top: 6px;
+            background: #f9f9f9;
+            padding: 6px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>📜 Audit log nabídky</h1>
+
+<div class="meta">
+    <b>ID nabídky:</b> <span th:text="${offer.id}"></span><br>
+    <b>Zákazník:</b> <span th:text="${offer.customerName}"></span><br>
+    <b>Stav:</b> <span th:text="${offer.status}"></span>
+</div>
+
+<table>
+    <thead>
+    <tr>
+        <th style="width:180px;">Čas</th>
+        <th style="width:180px;">Sekce</th>
+        <th style="width:220px;">Událost</th>
+        <th>Detail</th>
+    </tr>
+    </thead>
+
+    <tbody>
+
+    <tr th:each="log : ${logs}">
+
+        <!-- ČAS -->
+        <td th:text="${log.performedAt != null
+                      ? #temporals.format(log.performedAt, 'dd.MM.yyyy HH:mm:ss')
+                      : '—'}">
+        </td>
+
+        <!-- SEKCE -->
+        <td class="section"
+            th:text="${log.section != null ? log.section : '—'}">
+        </td>
+
+        <!-- AKCE (OPRAVENO – JEDEN VÝRAZ) -->
+        <td class="action"
+            th:text="${log.action != null ? log.action : '—'}"
+            th:classappend="${
+                (log.action != null and #strings.startsWith(log.action.name(), 'EMAIL') ? ' email' : '') +
+                (log.action != null and log.action.name() == 'ACCEPT' ? ' ok' : '') +
+                (log.action != null and log.action.name() == 'REJECT' ? ' fail' : '')
+            }">
+        </td>
+
+        <!-- DETAIL -->
+        <td>
+
+            <div th:if="${log.detail != null}">
+                <strong th:text="${log.detail}"></strong>
+            </div>
+
+            <div th:if="${log.oldValue != null or log.newValue != null}"
+                 class="value-change">
+
+                <div th:if="${log.oldValue != null}">
+                    <b>Původní:</b>
+                    <span th:text="${log.oldValue}"></span>
+                </div>
+
+                <div th:if="${log.newValue != null}">
+                    <b>Nová:</b>
+                    <span th:text="${log.newValue}"></span>
+                </div>
+
+            </div>
+
+            <div th:if="${log.performedBy != null}" class="muted">
+                Uživatel:
+                <span th:text="${log.performedBy.username}"></span>
+            </div>
+
+            <div th:if="${log.performedBy == null}" class="muted">
+                SYSTEM
+            </div>
+
+            <div th:if="${log.ipAddress != null}" class="muted">
+                IP: <span th:text="${log.ipAddress}"></span>
+            </div>
+
+            <div th:if="${log.userAgent != null}" class="muted">
+                UA: <span th:text="${log.userAgent}"></span>
+            </div>
+
+        </td>
+    </tr>
+
+    <tr th:if="${#lists.isEmpty(logs)}">
+        <td colspan="4" class="muted">Žádné auditní záznamy.</td>
+    </tr>
+
+    </tbody>
+</table>
+
+<br>
+<a href="/admin">← Zpět na dashboard</a>
+
+</body>
+</html>

@@ -1,38 +1,44 @@
 package com.example.offermanagementsystem.service;
 
-import com.example.offermanagementsystem.model.AuditAction;
-import com.example.offermanagementsystem.model.Offer;
-import com.example.offermanagementsystem.model.OfferAccessLog;
-import com.example.offermanagementsystem.repository.OfferAccessLogRepository;
+import com.example.offermanagementsystem.model.*;
+import com.example.offermanagementsystem.repository.AuditLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class AuditService {
 
-    private final OfferAccessLogRepository repository;
+    private final AuditLogRepository repository;
 
-    public AuditService(OfferAccessLogRepository repository) {
+    public AuditService(AuditLogRepository repository) {
         this.repository = repository;
     }
 
-    // bez HTTP (email, scheduler)
-    public void log(Offer offer, AuditAction action) {
-        OfferAccessLog log = new OfferAccessLog();
-        log.setOffer(offer);
-        log.setAction(action);
-        log.setAccessedAt(LocalDateTime.now());
-        repository.save(log);
-    }
+    @Transactional
+    public void log(
+            Offer offer,
+            AuditAction action,
+            AuditSection section,
+            User user,
+            String detail,
+            String oldValue,
+            String newValue,
+            HttpServletRequest request
+    ) {
 
-    // s HTTP kontextem
-    public void log(Offer offer, AuditAction action, HttpServletRequest request) {
-        OfferAccessLog log = new OfferAccessLog();
+        AuditLog log = new AuditLog();
         log.setOffer(offer);
         log.setAction(action);
-        log.setAccessedAt(LocalDateTime.now());
+        log.setSection(section);
+        log.setPerformedBy(user);
+        log.setDetail(detail);
+        log.setOldValue(oldValue);
+        log.setNewValue(newValue);
+        log.setPerformedAt(LocalDateTime.now());
 
         if (request != null) {
             log.setIpAddress(request.getRemoteAddr());
@@ -40,5 +46,10 @@ public class AuditService {
         }
 
         repository.save(log);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AuditLog> getOfferAudit(Long offerId) {
+        return repository.findAllByOfferIdWithUser(offerId);
     }
 }

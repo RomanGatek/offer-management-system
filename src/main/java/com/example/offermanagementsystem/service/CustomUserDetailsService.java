@@ -18,23 +18,19 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String username)
+            throws UsernameNotFoundException {
 
-        User u = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
-
-        String role = u.getRole(); // může být "ADMIN", "USER" nebo "ROLE_ADMIN"
-        if (role == null || role.isBlank()) {
-            role = "USER";
-        }
-
-        // ✅ normalizace: přesně 1x ROLE_
-        String authority = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User not found"));
 
         return new org.springframework.security.core.userdetails.User(
-                u.getUsername(),
-                u.getPassword(),
-                List.of(new SimpleGrantedAuthority(authority))
+                user.getUsername(),
+                user.getPassword(),
+                List.of(
+                        new SimpleGrantedAuthority("ROLE_" + user.getRole())
+                )
         );
     }
 }

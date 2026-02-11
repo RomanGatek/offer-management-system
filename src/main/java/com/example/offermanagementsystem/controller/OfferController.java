@@ -2,6 +2,7 @@ package com.example.offermanagementsystem.controller;
 
 import com.example.offermanagementsystem.model.*;
 import com.example.offermanagementsystem.repository.*;
+import com.example.offermanagementsystem.service.AuditService;
 import com.example.offermanagementsystem.service.EmailService;
 import com.example.offermanagementsystem.service.PdfExportService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,6 +27,9 @@ public class OfferController {
     private final OfferRevisionRepository revisionRepository;
     private final PdfExportService pdfExportService;
     private final EmailService emailService;
+    private final AuditLogRepository auditLogRepository;
+    private final AuditService auditService;
+
 
     public OfferController(
             OfferRepository offerRepository,
@@ -33,7 +37,11 @@ public class OfferController {
             OfferStatusHistoryRepository historyRepository,
             OfferRevisionRepository revisionRepository,
             PdfExportService pdfExportService,
-            EmailService emailService
+            EmailService emailService,
+            AuditLogRepository auditLogRepository,
+            OfferAccessLogRepository offerAccessLogRepository,
+            AuditService auditService
+
     ) {
         this.offerRepository = offerRepository;
         this.userRepository = userRepository;
@@ -41,6 +49,8 @@ public class OfferController {
         this.revisionRepository = revisionRepository;
         this.pdfExportService = pdfExportService;
         this.emailService = emailService;
+        this.auditLogRepository = auditLogRepository;
+        this.auditService = auditService;
     }
 
     // ===============================
@@ -126,6 +136,35 @@ public class OfferController {
         );
 
         return "offers/detail";
+    }
+
+    // ===============================
+// AUDIT – vlastník + admin
+// ===============================
+    @GetMapping("/{id}/audit")
+    public String offerAudit(
+            @PathVariable Long id,
+            Principal principal,
+            Model model
+    ) {
+
+        Offer offer = offerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Offer not found"));
+
+        User user = getCurrentUser(principal);
+
+        if (!isAdmin(user) &&
+                !offer.getUser().getId().equals(user.getId())) {
+            return "redirect:/offers?error=unauthorized";
+        }
+
+        model.addAttribute("offer", offer);
+        model.addAttribute(
+                "logs",
+                auditService.getOfferAudit(id)
+        );
+
+        return "offers/audit";
     }
 
     // ===============================

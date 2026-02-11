@@ -24,30 +24,29 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
 
-                        // 🔓 VEŘEJNÉ (bez loginu)
+                        // VEŘEJNÉ
                         .requestMatchers(
                                 "/login",
-                                "/register",
                                 "/error",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
                                 "/favicon.ico",
-                                "/public/**"              // ✅ ZÁKAZNICKÝ TOKEN PŘÍSTUP
+                                "/customer/**",
+                                "/public/**"
                         ).permitAll()
 
-                        // 🔐 ADMIN
+                        // ADMIN
                         .requestMatchers("/admin/**")
                         .hasRole("ADMIN")
 
-                        // 🔐 USER + ADMIN
+                        // USER + ADMIN
                         .requestMatchers("/offers/**")
                         .hasAnyRole("USER", "ADMIN")
 
                         .anyRequest().authenticated()
                 )
 
-                // ================= LOGIN =================
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
@@ -56,7 +55,6 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
-                // ================= LOGOUT =================
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
@@ -65,12 +63,10 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
-                // ================= CSRF =================
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/h2-console/**")
                 )
 
-                // ================= HEADERS =================
                 .headers(headers -> headers
                         .addHeaderWriter(
                                 new XFrameOptionsHeaderWriter(
